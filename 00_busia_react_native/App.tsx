@@ -1,49 +1,41 @@
-import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  SafeAreaView,
-  Image,
-  TouchableHighlight,
-  Button,
-  Alert,
-  Platform,
-  Dimensions,
-} from 'react-native';
-import { useDeviceOrientation, useDimensions } from '@react-native-community/hooks';
-import WelcomeScreen from './components/WelcomeScreen'
-import ImageViewScreen from './components/ImageViewScreen'
+import React from 'react'
+import {useDeviceOrientation, useDimensions} from '@react-native-community/hooks'
+import WelcomeScreen from './app/screens/WelcomeScreen'
+import ViewImageScreen from './app/screens/ViewImageScreen';
+import {Text, View} from 'react-native'
+import AppText from './app/components/AppText'
+import {MaterialCommunityIcons} from '@expo/vector-icons'
+import colors from './app/config/colors';
+import Card from './app/components/Card'
 
 export default function App() {
-  const { landscape } = useDeviceOrientation()
-  const [screen, setScreen] = useState('welcome')
+    return (
+        <View style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            alignContent: 'center',
+            backgroundColor: '#f8f4f4',
+            paddingHorizontal: 20,
+            paddingTop: 100,
 
-  return (
-    <View style={styles.container}>
-      {(() => {
-
-        switch(screen) {
-          case 'image-view': {
-            // @ts-ignore
-            return (<ImageViewScreen screenSwitcher={setScreen}/>)
-          }
-          default: {
-            // @ts-ignore
-            return (<WelcomeScreen screenSwitcher={setScreen}/>)
-          }
-        }
-
-      })()}
-      
-    </View>
-  );
+        }}>
+            <Card
+                title={'The place'}
+                subTitle={'we walk there 3 nights in a row...'}
+                image={{uri: 'https://picsum.photos/1024/768'}}
+            />
+            <Card
+                title={'The place'}
+                subTitle={'we walk there 3 nights in a row...'}
+                image={{uri: 'https://picsum.photos/1024/768'}}
+            />
+            <Card
+                title={'The place'}
+                subTitle={'we walk there 3 nights in a row...'}
+                image={{uri: 'https://picsum.photos/1024/768'}}
+            />
+        </View>
+        //<WelcomeScreen/>
+    )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff'
-  },
-});
