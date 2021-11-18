@@ -3,5 +3,11 @@ declare type TColors = {
     secondary: string,
     darkBg: string,
     lightBg: string,
+    brightLight: string,
     defaultText: string,
+    medium: string,
+    light: string,
+    danger: string,
+    thirdAction: string,
+    creamBg: string,
 }

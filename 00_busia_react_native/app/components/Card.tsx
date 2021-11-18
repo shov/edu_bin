@@ -4,17 +4,14 @@ import colors from '../config/colors'
 import AppText from './AppText'
 
 
-declare interface ICardProps {
+export declare interface ICardProps {
     title: string,
     subTitle: string,
     image: number | { uri: string },
     pressHandler?: (...args: any[]) => void,
 }
 
-function Card({title, subTitle, image, pressHandler}: ICardProps) {
-    pressHandler = pressHandler ?? (() => {
-    })
-
+export function Card({title, subTitle, image, pressHandler}: ICardProps) {
     return (
         <TouchableWithoutFeedback onPress={pressHandler}>
             <View style={styles.view}>
@@ -33,7 +30,6 @@ const styles = StyleSheet.create({
         width: '100%',
         margin: 10,
         borderRadius: 40,
-        height: 400,
         flexDirection: 'column',
         alignItems: 'flex-start',
         backgroundColor: colors.lightBg,
@@ -48,9 +44,7 @@ const styles = StyleSheet.create({
     },
     image: {
         width: '100%',
-        height: '75%',
+        height: 300,
         resizeMode: 'cover',
     },
 })
-
-export default Card
