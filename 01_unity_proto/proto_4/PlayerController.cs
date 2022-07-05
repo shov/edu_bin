@@ -5,6 +5,7 @@ using UnityEngine;
 public class PlayerController : MonoBehaviour
 {
     public float speed = .5f;
+    public bool hasPopwerUp = false;
     private Rigidbody rb;
     private GameObject focalPoint;
 
@@ -19,5 +20,14 @@ public class PlayerController : MonoBehaviour
     {
         float verticalInput = Input.GetAxis("Vertical");
         rb.AddForce(focalPoint.transform.forward * speed * verticalInput);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("PowerUp"))
+        {
+            hasPopwerUp = true;
+            Destroy(other.gameObject);
+        }
     }
 }

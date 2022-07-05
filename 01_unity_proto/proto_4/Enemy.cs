@@ -17,11 +17,7 @@ public class Enemy : MonoBehaviour
     
     void Update()
     {
-        Vector3 a = (player.transform.position - transform.position);
-        Vector3 b = a.normalized;
-
-        Debug.Log(a.x + " "  + a.y + " " + a.z);
-        Debug.Log(b.x + " " + b.y + " " + b.z);
-        rb.AddForce((player.transform.position - transform.position).normalized * speed);
+        Vector3 lookDirection = (player.transform.position - transform.position).normalized;
+        rb.AddForce(lookDirection * speed);
     }
 }
