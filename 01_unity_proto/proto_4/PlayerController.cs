@@ -6,6 +6,8 @@ public class PlayerController : MonoBehaviour
 {
     public float speed = .5f;
     public bool hasPopwerUp = false;
+    private float powerUpStrength = 15f;
+
     private Rigidbody rb;
     private GameObject focalPoint;
 
@@ -28,6 +30,17 @@ public class PlayerController : MonoBehaviour
         {
             hasPopwerUp = true;
             Destroy(other.gameObject);
+        }
+    }
+
+    private void OnCollisionEnter(Collision other)
+    {
+        if(other.gameObject.CompareTag("Enemy") && hasPopwerUp)
+        {
+            Rigidbody enemyRb = other.gameObject.GetComponent<Rigidbody>();
+            Vector3 awayFromPlayer = (other.gameObject.transform.position - transform.position).normalized;
+
+            enemyRb.AddForce(awayFromPlayer * powerUpStrength, ForceMode.Impulse);
         }
     }
 }

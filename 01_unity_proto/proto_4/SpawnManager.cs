@@ -17,10 +17,10 @@ public class SpawnManager : MonoBehaviour
 
     void Update()
     {
-
+        InvokeRepeating(nameof(SpawnEnemy), 10, 7);
     }
 
-    void SpawnEnemy(int num = 1)
+    public void SpawnEnemy(int num = 1)
     {
         for (int i = 0; i < num; i++)
         {
@@ -42,6 +42,6 @@ public class SpawnManager : MonoBehaviour
             z = Random.Range(-islandR, islandR);
         }
 
-        return new Vector3(x, .15f, z);
+        return new Vector3(x, 1.15f, z);
     }
 }
