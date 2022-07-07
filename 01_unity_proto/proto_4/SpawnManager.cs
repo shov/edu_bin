@@ -12,23 +12,34 @@ public class SpawnManager : MonoBehaviour
     void Start()
     {
         player = GameObject.Find("Player");
-        SpawnEnemy();
+        InvokeRepeating(nameof(SpawnEnemy), 2, 14);
+        InvokeRepeating(nameof(SpawnPowerUp), 1, 20);
     }
 
     void Update()
     {
-        InvokeRepeating(nameof(SpawnEnemy), 10, 7);
+        
     }
 
-    public void SpawnEnemy(int num = 1)
+    void SpawnEnemy()
+    {
+        Spawn(enemyPf, 1);
+    }
+
+    void SpawnPowerUp()
+    {
+        Spawn(powerUpPf, 1);
+    }
+
+    void Spawn(GameObject entity, int num = 1)
     {
         for (int i = 0; i < num; i++)
         {
-            Instantiate(enemyPf, GenEnemySpawnPos(), enemyPf.transform.rotation);
+            Instantiate(entity, RandPositionFarFromPlayer(), entity.transform.rotation);
         }
     }
 
-    protected Vector3 GenEnemySpawnPos()
+    protected Vector3 RandPositionFarFromPlayer()
     {
         float x = Random.Range(-islandR, islandR);
         while (x < player.transform.position.x + 2 && x > player.transform.position.x - 2)
