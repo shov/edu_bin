@@ -9,26 +9,45 @@ public class SpawnManager : MonoBehaviour
     public GameObject powerUpPf;
     private GameObject player;
 
+    private int liveEnemyCount = 1;
+    public bool spawnBlocked = false;
+    private int prevWave = 1;
+    public int waveSize = 1;
+    private int timeToGetPU = 4; // sec
+
     void Start()
     {
         player = GameObject.Find("Player");
-        InvokeRepeating(nameof(SpawnEnemy), 2, 14);
-        InvokeRepeating(nameof(SpawnPowerUp), 1, 20);
     }
 
     void Update()
     {
-        
+        liveEnemyCount = FindObjectsOfType<Enemy>(false).Length;
+        if(liveEnemyCount == 0 && !spawnBlocked)
+        {
+            spawnBlocked = true;
+            SpawnPowerUp(waveSize / 2);
+            StartCoroutine( delayedSpawnEnemy(waveSize, waveSize / 2 * timeToGetPU) );
+            waveSize += prevWave;
+            prevWave = waveSize - prevWave;
+        }
     }
 
-    void SpawnEnemy()
+    IEnumerator delayedSpawnEnemy(int num, int delay)
     {
-        Spawn(enemyPf, 1);
+        yield return new WaitForSeconds(delay);
+        SpawnEnemy(num);
+        spawnBlocked = false;
     }
 
-    void SpawnPowerUp()
+    void SpawnEnemy(int num = 1)
     {
-        Spawn(powerUpPf, 1);
+        Spawn(enemyPf, num);
+    }
+
+    void SpawnPowerUp(int num = 1)
+    {
+        Spawn(powerUpPf, num);
     }
 
     void Spawn(GameObject entity, int num = 1)

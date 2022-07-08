@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class RemoveFallen : MonoBehaviour
 {
-    public float bottom = -20f;
+    public float bottom = -5f;
     void Start()
     {
         
