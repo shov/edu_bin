@@ -16,10 +16,13 @@ public class ProjectileController : MonoBehaviour
        
     }
 
-    public void Fire(Vector3 direction)
+    public void Fire(GameObject enemy, GameObject player)
     {
-        transform.LookAt(direction);
-        GetComponent<Rigidbody>().AddForce(direction * speed, ForceMode.Impulse);
+        Vector3 fireTo = (enemy.transform.position - player.transform.position).normalized;
+        transform.position = player.transform.position + fireTo;
+        transform.LookAt(enemy.transform);
+        transform.Rotate(90f, 0f, 0f);
+        GetComponent<Rigidbody>().AddForce(fireTo * speed, ForceMode.Impulse);
     }
 
     IEnumerator RemoveByTimeout()

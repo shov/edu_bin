@@ -34,11 +34,9 @@ public class PlayerController : MonoBehaviour
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
 
-        rb.AddForce(Vector3.forward * moveSpeed * verticalInput);
-        rb.AddForce(Vector3.right * moveSpeed * horizontalInput);
-        //transform.Translate(Vector3.forward * verticalInput * Time.deltaTime + Vector3.right * horizontalInput * Time.deltaTime, Space.World);
+        rb.AddForce(Vector3.forward * moveSpeed * verticalInput + Vector3.right * moveSpeed * horizontalInput);
 
-        if (System.Math.Abs(horizontalInput) + System.Math.Abs(verticalInput) > 0)
+        if (System.Math.Abs(horizontalInput) + System.Math.Abs(verticalInput) > 0.1)
         {
             Vector3 moveDirection = new Vector3(horizontalInput * moveSpeed, 0f, verticalInput * moveSpeed) + transform.position;
             transform.LookAt(moveDirection);
@@ -52,10 +50,10 @@ public class PlayerController : MonoBehaviour
         if (null != memEnemy && !fireLocked)
         {
             fireLocked = true;
-            Vector3 fireTo = (memEnemy.transform.position - transform.position).normalized;
-            GameObject projectile = Instantiate(projectilePf, transform.position + new Vector3(0f, 1.5f, 2f), projectilePf.transform.rotation);
+            
+            GameObject projectile = Instantiate(projectilePf);
             ProjectileController pClr = projectile.GetComponent<ProjectileController>();
-            pClr.Fire(fireTo);
+            pClr.Fire(memEnemy, gameObject);
             memEnemy = null;
             memEnemyDistance = default;
             StartCoroutine(UnlockFire());
