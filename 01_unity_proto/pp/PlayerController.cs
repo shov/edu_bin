@@ -11,9 +11,10 @@ public class PlayerController : MonoBehaviour
     public float attakRange = 20f;
     public GameObject projectilePf;
     private float attakSpeed = 0.5f;
-    private float memEnemyDistance;
-    private GameObject memEnemy = null;
-    private bool fireLocked = false;
+    public float memEnemyDistance;
+    public GameObject memEnemy = null;
+    public GameObject prevEnemy = null;
+    public bool fireLocked = false;
 
     public void RegisterEnemy(GameObject enemy, float distance)
     {
@@ -21,6 +22,12 @@ public class PlayerController : MonoBehaviour
         {
             memEnemyDistance = distance;
             memEnemy = enemy;
+            if (null != prevEnemy)
+            {
+                prevEnemy.GetComponent<EnemyController>().TargetRingOff();
+            }
+            prevEnemy = enemy;
+            memEnemy.GetComponent<EnemyController>().TargetRingOn();
         }
     }
 
@@ -29,14 +36,27 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody>();
     }
 
+
+    // TODO fix moving!
+    public float prevMovingSum = 0f;
     void Update()
     {
         float horizontalInput = Input.GetAxis("Horizontal");
         float verticalInput = Input.GetAxis("Vertical");
+        float movingSum = System.Math.Abs(horizontalInput) + System.Math.Abs(verticalInput);
 
-        rb.AddForce(Vector3.forward * moveSpeed * verticalInput + Vector3.right * moveSpeed * horizontalInput);
+        if (prevMovingSum <= movingSum && movingSum > 0.01)
+        {
+            rb.AddForce((Vector3.forward * verticalInput + Vector3.right * horizontalInput).normalized * moveSpeed);
+        }
+        if(prevMovingSum > movingSum && movingSum < 0.1)
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+        prevMovingSum = movingSum;
 
-        if (System.Math.Abs(horizontalInput) + System.Math.Abs(verticalInput) > 0.1)
+        if (movingSum > 0.1)
         {
             Vector3 moveDirection = new Vector3(horizontalInput * moveSpeed, 0f, verticalInput * moveSpeed) + transform.position;
             transform.LookAt(moveDirection);
@@ -50,7 +70,7 @@ public class PlayerController : MonoBehaviour
         if (null != memEnemy && !fireLocked)
         {
             fireLocked = true;
-            
+
             GameObject projectile = Instantiate(projectilePf);
             ProjectileController pClr = projectile.GetComponent<ProjectileController>();
             pClr.Fire(memEnemy, gameObject);

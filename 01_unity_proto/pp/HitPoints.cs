@@ -11,7 +11,7 @@ public class HitPoints : MonoBehaviour
         if(other.CompareTag("Weapon"))
         {
             hp -= other.GetComponent<Weapon>().damage;
-            if(hp < 0)
+            if(hp <= 0)
             {
                 Destroy(gameObject);
             }
