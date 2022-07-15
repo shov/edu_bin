@@ -20,7 +20,7 @@ public class ProjectileController : MonoBehaviour
     {
         Vector3 fireTo = (enemy.transform.position - player.transform.position).normalized;
         transform.position = player.transform.position + fireTo;
-        transform.LookAt(enemy.transform);
+        transform.LookAt(enemy.transform, transform.up);
         transform.Rotate(90f, 0f, 0f);
         GetComponent<Rigidbody>().AddForce(fireTo * speed, ForceMode.Impulse);
     }

@@ -6,6 +6,11 @@ public class HitPoints : MonoBehaviour
 {
     public float hp = 100f;
 
+    public void DealDamage(float damage)
+    {
+        hp -= damage;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if(other.CompareTag("Weapon"))
