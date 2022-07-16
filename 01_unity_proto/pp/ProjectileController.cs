@@ -31,9 +31,9 @@ public class ProjectileController : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collider)
     {
-        if(other.CompareTag("Enemy"))
+        if(collider.gameObject.CompareTag("Enemy"))
         {
             // Interaction
             Destroy(gameObject);

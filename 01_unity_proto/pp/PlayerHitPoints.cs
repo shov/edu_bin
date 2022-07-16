@@ -4,9 +4,9 @@ using UnityEngine;
 
 public class PlayerHitPoints : HitPoints
 {
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        if(other.CompareTag("Weapon"))
+        if(collision.gameObject.CompareTag("Weapon"))
         {
             // nothing happens
         }

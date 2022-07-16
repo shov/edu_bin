@@ -11,11 +11,11 @@ public class HitPoints : MonoBehaviour
         hp -= damage;
     }
 
-    private void OnTriggerEnter(Collider other)
+    private void OnCollisionEnter(Collision collision)
     {
-        if(other.CompareTag("Weapon"))
+        if(collision.gameObject.CompareTag("Weapon"))
         {
-            hp -= other.GetComponent<Weapon>().damage;
+            hp -= collision.gameObject.GetComponent<Weapon>().damage;
             if(hp <= 0)
             {
                 Destroy(gameObject);
