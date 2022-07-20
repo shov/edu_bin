@@ -37,7 +37,13 @@ public class Target : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     { // must be the only one trigger there (the Sensor)
-        gameManager.AddScore(-scoreValue);
+        if (other.gameObject.CompareTag("Bad"))
+        {
+            gameManager.AddScore(-scoreValue);
+        } else
+        {
+            gameManager.GameOver();
+        }
         Destroy(gameObject);
     }
 
