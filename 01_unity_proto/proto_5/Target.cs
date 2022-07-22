@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class Target : MonoBehaviour
 {
+    public static float? prevXPos = null;
+
     public int scoreValue = 5;
     private int randScoreRange = 5;
 
@@ -21,7 +23,7 @@ public class Target : MonoBehaviour
     {
         rb = gameObject.GetComponent<Rigidbody>();
         gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
-        if(scoreValue == 0)
+        if (scoreValue == 0)
         {
             scoreValue = Random.Range(-randScoreRange, randScoreRange);
         }
@@ -37,10 +39,11 @@ public class Target : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     { // must be the only one trigger there (the Sensor)
-        if (other.gameObject.CompareTag("Bad"))
+        if (gameObject.CompareTag("Bad"))
         {
             gameManager.AddScore(-scoreValue);
-        } else
+        }
+        else
         {
             gameManager.GameOver();
         }
@@ -49,7 +52,18 @@ public class Target : MonoBehaviour
 
     private void Spawn()
     {
-        transform.position = new Vector3(Random.Range(-xRange, xRange), yStartBottom);
+        float xPos = Random.Range(-xRange, xRange);
+
+        if (Target.prevXPos != null)
+        {
+            while (System.Math.Abs(xPos - Target.prevXPos) < 1f)
+            {
+                xPos = Random.Range(-xRange, xRange);
+            }
+            Target.prevXPos = xPos;
+        }
+
+        transform.position = new Vector3(xPos, yStartBottom);
 
         rb.AddForce(Vector3.up * Random.Range(minForce, maxForce), ForceMode.Impulse);
         rb.AddTorque(RandomAngle(), RandomAngle(), RandomAngle());
