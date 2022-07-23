@@ -56,7 +56,7 @@ public class Target : MonoBehaviour
 
         if (Target.prevXPos != null)
         {
-            while (System.Math.Abs(xPos - Target.prevXPos) < 1f)
+            while (System.Math.Abs(xPos - (float)Target.prevXPos) < 1f)
             {
                 xPos = Random.Range(-xRange, xRange);
             }
