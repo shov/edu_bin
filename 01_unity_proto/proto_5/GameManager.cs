@@ -8,27 +8,17 @@ using UnityEngine.UI;
 public class GameManager : MonoBehaviour
 {
     public List<GameObject> targetList;
-    public float spawnTimer = 2f;
+    public float defaultSpawnTimer = 2f;
+    private float spawnTimer = 2f;
 
     public int score = 0;
     public TextMeshProUGUI scoreText;
     public TextMeshProUGUI gameOverText;
 
     public Button restartButton;
+    public GameObject titleScreen;
 
     public bool isGameActive;
-
-    void Start()
-    {
-        isGameActive = true;
-        StartCoroutine(SpawnTarget());
-        AddScore(0);
-    }
-
-    void Update()
-    {
-
-    }
 
     public void AddScore(int added)
     {
@@ -57,5 +47,15 @@ public class GameManager : MonoBehaviour
 
     public void RestartGame() {
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+
+    public void StartGame(int difficulty)
+    {
+        titleScreen.gameObject.SetActive(false);
+        isGameActive = true;
+        StartCoroutine(SpawnTarget());
+        spawnTimer = defaultSpawnTimer / difficulty;
+        score = 0;
+        AddScore(0);
     }
 }
