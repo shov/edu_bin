@@ -9,3 +9,5 @@
 .env
 .DS_Store
 
+/02_challenge_xix/data
+/02_challenge_xix/node_modules
