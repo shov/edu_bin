@@ -1,15 +1,15 @@
 import {AScene} from './AScene'
+import {TInput} from './InputManager'
 
 export abstract class AEntity {
     protected _scene!: AScene
 
 
-
-    public init (canvas: HTMLCanvasElement) {
-
+    public init (scene: AScene, canvas: HTMLCanvasElement) {
+        this._scene = scene
     }
 
-    public update(dt: number) {
+    public update(dt: number, input: TInput) {
 
     }
 
