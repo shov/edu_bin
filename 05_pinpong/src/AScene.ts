@@ -8,7 +8,7 @@ import {IBoxCollider} from './mixins/boxCollieder'
 export abstract class AScene {
     protected _engine!: Engine
     protected _entityMap: { [name: string]: AEntity } = {}
-    protected _wallList!: Record<'top' | 'right' | 'bottom' | 'left', IBoxCollider>
+    public wallList!: Record<'top' | 'right' | 'bottom' | 'left', IBoxCollider>
 
     public get entityList(): AEntity[] {
         return Object.values(this._entityMap)
@@ -34,11 +34,11 @@ export abstract class AScene {
             left: [{x: -c, y: -c}, {x: 0, y: -c}, {x: 0, y: canvas.height + c}, {x: -c, y: canvas.height + c}],
         }
 
-        this._wallList = (Object
+        this.wallList = (Object
             .keys(rawWallList) as (keyof typeof rawWallList)[])
             .reduce((acc: any, key: keyof typeof rawWallList) => {
                 acc[key] = {
-                    vertices(): [TPoint, TPoint, TPoint, TPoint] {
+                    vertices(): [TVector2, TVector2, TVector2, TVector2] {
                         return rawWallList[key]
                     },
                     hasCollisionWith(t): boolean {
@@ -53,23 +53,23 @@ export abstract class AScene {
         for (const entity of this.entityList) {
             entity.update(dt, input)
             if (!(entity as unknown as ILockedOnScreen).isLockedOnScreen) {
-                return
+                continue
             }
 
             if ('function' === typeof (entity as unknown as IBoxCollider).hasCollisionWith) {
-                if ((entity as unknown as IBoxCollider).hasCollisionWith(this._wallList.top)) {
+                if ((entity as unknown as IBoxCollider).hasCollisionWith(this.wallList.top)) {
                     (entity as unknown as IBoxCollider).y = 0 + (entity as unknown as IBoxCollider)?.anchor?.y || 0
                 }
-                if ((entity as unknown as IBoxCollider).hasCollisionWith(this._wallList.bottom)) {
+                if ((entity as unknown as IBoxCollider).hasCollisionWith(this.wallList.bottom)) {
                     (entity as unknown as IBoxCollider).y
                         = this._engine.canvas.height
                         - (entity as unknown as IBoxCollider).h
                         + (entity as unknown as IBoxCollider)?.anchor?.y || 0
                 }
-                if ((entity as unknown as IBoxCollider).hasCollisionWith(this._wallList.left)) {
+                if ((entity as unknown as IBoxCollider).hasCollisionWith(this.wallList.left)) {
                     (entity as unknown as IBoxCollider).x = 0 + (entity as unknown as IBoxCollider)?.anchor?.x || 0
                 }
-                if ((entity as unknown as IBoxCollider).hasCollisionWith(this._wallList.right)) {
+                if ((entity as unknown as IBoxCollider).hasCollisionWith(this.wallList.right)) {
                     (entity as unknown as IBoxCollider).x
                         = this._engine.canvas.width
                         - (entity as unknown as IBoxCollider).w

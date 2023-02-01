@@ -1,5 +1,5 @@
-export interface IPosition extends TPoint {
-    position: Readonly<TPoint>,
+export interface IPosition extends TVector2 {
+    position: Readonly<TVector2>,
 }
 
 export const position = {
@@ -22,7 +22,7 @@ export const position = {
         this._y = value
     },
 
-    get position(): TPoint {
+    get position(): TVector2 {
         return {x: this._x, y: this._y}
     },
 

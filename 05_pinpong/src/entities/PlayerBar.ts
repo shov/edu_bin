@@ -15,7 +15,7 @@ export interface PlayerBar extends IPosition, IRect, ILockedOnScreen, IBoxCollid
 @mixin(lockedOnScreen)
 @mixin(boxCollider)
 export class PlayerBar extends AEntity {
-    readonly SPEED = 5
+    public speed = 5
 
     init(scene: AScene, canvas: HTMLCanvasElement) {
         super.init(scene, canvas)
@@ -29,11 +29,21 @@ export class PlayerBar extends AEntity {
     }
 
     update(dt: number, input: TInput) {
-        this.x += dt * this.SPEED * input.horizontal
+        this.x += dt * this.speed * input.horizontal
     }
 
     render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number) {
         ctx.fillStyle = 'black'
         ctx.fillRect(...this.body(this.position))
+    }
+
+    public moveUp (value: number) {
+        setTimeout(() => {
+            this.y -= value
+        }, 200)
+    }
+
+    public increaseSpeed(value: number) {
+        this.speed += value
     }
 }

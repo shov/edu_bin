@@ -1,11 +1,11 @@
 export interface IRect {
     w: number,
     h: number,
-    anchor: Readonly<TPoint>,
+    anchor: Readonly<TVector2>,
 
-    scruff(position: TPoint): TPoint,
+    scruff(position: TVector2): TVector2,
 
-    body(position: TPoint): [number, number, number, number],
+    body(position: TVector2): [number, number, number, number],
 }
 
 export const rect = {
@@ -13,14 +13,14 @@ export const rect = {
     _h: 0 as number,
     _anchor: {x: 0, y: 0},
 
-    scruff(position: TPoint): TPoint {
+    scruff(position: TVector2): TVector2 {
         return {
             x: position.x - this._anchor.x,
             y: position.y - this._anchor.y,
         }
     },
 
-    body(position: TPoint): [number, number, number, number] {
+    body(position: TVector2): [number, number, number, number] {
         return [
             position.x - this._anchor.x,
             position.y - this._anchor.y,
@@ -45,7 +45,7 @@ export const rect = {
         this._h = value
     },
 
-    get anchor(): TPoint {
+    get anchor(): TVector2 {
         return this._anchor
     },
 
