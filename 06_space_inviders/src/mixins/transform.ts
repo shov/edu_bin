@@ -1,13 +1,12 @@
-import {IVector2, Vector2} from '../Vector2'
-import {ISize2, Size2} from '../Size2'
-import {MIXIN_NAME_SYMBOL} from '../Mixer'
+import {IVector2, Vector2} from '../infrastructure/Vector2'
+import {ISize2, Size2} from '../infrastructure/Size2'
+import {MIXIN_NAME_SYMBOL} from '../infrastructure/Mixer'
 
 export interface ITransform {
     position: Readonly<IVector2>
     size: Readonly<ISize2>
     anchor: Readonly<IVector2>
-
-    scruff(): IVector2
+    scruff: IVector2
 
     body(): [number, number, number, number]
 
@@ -53,7 +52,7 @@ export const transform: TMixIn = {
         this['$transform.anchor.y'] = vector.y
     },
 
-    scruff(): IVector2 {
+    get scruff(): IVector2 {
         return new Vector2(
             this['$transform.position.x'] - this['$transform.anchor.x'],
             this['$transform.position.y'] - this['$transform.anchor.y']

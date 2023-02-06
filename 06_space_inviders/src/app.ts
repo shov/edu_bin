@@ -1,6 +1,6 @@
 import {DefaultScene} from './scenes/DefaultScene'
-import {Engine} from './Engine'
-import {InputManager} from './InputManager'
+import {Engine} from './infrastructure/Engine'
+import {InputManager} from './infrastructure/InputManager'
 
 window.addEventListener('load', () => {
 

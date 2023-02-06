@@ -3,7 +3,7 @@ export const MIXIN_REQUIRE_SYMBOL = Symbol.for('$mixinRequire')
 
 export function mixin(mixIn: TMixIn, rules: null | TDict | boolean = null) {
     return function decorator(Base: Function): any {
-        mixIn[MIXIN_REQUIRE_SYMBOL].forEach((requiredMixinName: string) => {
+        ;(mixIn[MIXIN_REQUIRE_SYMBOL] || []).forEach((requiredMixinName: string) => {
             if (!(Base.prototype.componentList || []).includes(requiredMixinName)) {
                 throw new Error(`Mixin ${mixIn[MIXIN_NAME_SYMBOL]} requires ${requiredMixinName}, but it hasn't applied to ${Base.name} yet`)
             }

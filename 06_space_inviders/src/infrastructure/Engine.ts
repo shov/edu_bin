@@ -4,6 +4,8 @@ import {InputManager} from './InputManager'
 export class Engine {
     public readonly FRAME_RATE = 60
 
+    public isDebugOn: boolean = false
+
     protected _lastFrameTime!: number
 
     protected _canvas!: HTMLCanvasElement
@@ -30,6 +32,9 @@ export class Engine {
         this._input = input
         this._currentScene = scene
 
+        this._input.onKeyPress('KeyG', () => {
+            this.isDebugOn = !this.isDebugOn
+        })
         this._input.start()
         scene.init(this, canvas)
 
@@ -47,13 +52,16 @@ export class Engine {
         const fps = Math.floor(1000 / delta)
         const dt = Math.max(0, Number(Math.round(delta / (1000 / this.FRAME_RATE)).toFixed(2)))
 
+        // input
+        this._input.update(dt)
+
         // update
         this._currentScene.update(dt, this._input)
 
         // render
         this._currentScene.render(this._canvas, this._ctx, dt, delta, fps)
 
-        //debug
+        // debug
         this._debug(dt, delta, fps)
 
         // next iteration
@@ -61,14 +69,16 @@ export class Engine {
     }
 
     protected _debug(dt: number, delta: number, fps: number) {
-        if (this._input.altKey) {
+        if (this.isDebugOn) {
             this._ctx.fillStyle = 'black'
             this._ctx.strokeStyle = 'white'
-            this._ctx.fillRect(0, 0, 120, 50)
+            this._ctx.fillRect(0, 0, 120, 85)
             this._ctx.font = '15px serif'
             this._ctx.strokeText(`∂ ${dt}`, 10, 15, 100)
             this._ctx.strokeText(`Δ: ${delta}`, 10, 30, 100)
             this._ctx.strokeText(`fps: ${fps}`, 10, 45, 100)
+            this._ctx.strokeText(`obj.count: ${this._currentScene.entityList.length}`, 10, 60, 100)
+            this._ctx.strokeText(`in H,V: ${this._input.horizontal.toFixed(2)},${this.input.vertical.toFixed(2)}`, 10, 75, 100)
         }
     }
 }

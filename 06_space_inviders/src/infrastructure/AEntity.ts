@@ -1,26 +1,33 @@
 import {AScene} from './AScene'
 import {TInput} from './InputManager'
 
+export interface IComponentMadeOF {
+    componentList: string[]
+}
+
 export interface IEntity {
-    componentList: string[],
     scene: AScene,
     tagList: string[]
+    name: string
 
-    init(scene: AScene, canvas: HTMLCanvasElement): void
+    init(scene: AScene): void
 
     update(dt: number, input: TInput): void
 
     render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number): void
+
+    destroy(): void
 }
 
 export abstract class AEntity implements IEntity {
-    public componentList: string[] = []
-
     public scene!: AScene
 
     public tagList: string[] = []
 
-    public init(scene: AScene, canvas: HTMLCanvasElement): void {
+    constructor(public name: string = 'unnamed' + crypto.randomUUID()) {
+    }
+
+    public init(scene: AScene): void {
         this.scene = scene
     }
 
@@ -30,5 +37,9 @@ export abstract class AEntity implements IEntity {
 
     public render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number): void {
 
+    }
+
+    public destroy(): void {
+        this.scene.remove(this.name)
     }
 }

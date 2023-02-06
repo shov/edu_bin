@@ -14,6 +14,9 @@ export type TInput = {
     ctrlKey: boolean,
     metaKey: boolean,
     shiftKey: boolean,
+
+    onKeyPress(code: KeyboardEvent['code'], cb: () => void): void,
+    unsubscribeKeyPress(code: KeyboardEvent['code'], cb?: () => void): void,
 }
 
 // TODO add mouse
@@ -36,6 +39,8 @@ export class InputManager implements TInput {
     shiftKey: boolean = false
 
     protected _started: boolean = false
+
+    protected _subscriptionDict: { [code: string]: (() => void)[] } = {}
 
     public start() {
         if (this._started) return
@@ -66,24 +71,26 @@ export class InputManager implements TInput {
             case 'ArrowLeft':
             case 'KeyA':
                 this.left = true
-                this.horizontal = -1
+                this._axisCurrHorizontalMove = this._axisTable.hde
                 break
             case 'ArrowRight':
             case 'KeyD':
                 this.right = true
-                this.horizontal = 1
+                this._axisCurrHorizontalMove = this._axisTable.hie
                 break
             case 'ArrowUp':
             case 'KeyW':
                 this.up = true
-                this.vertical = 1
+                this._axisCurrVerticalMove = this._axisTable.vde
                 break
             case 'ArrowDown':
             case 'KeyS':
                 this.down = true
-                this.vertical = -1
+                this._axisCurrVerticalMove = this._axisTable.vie
                 break
         }
+
+        ;(this._subscriptionDict[e.code] || []).forEach(cb => cb())
     }
 
     protected _keyUpListener = (e: KeyboardEvent) => {
@@ -102,30 +109,86 @@ export class InputManager implements TInput {
             case 'KeyA':
                 this.left = false
                 if (!this.right) {
-                    this.horizontal = 0
+                    this._axisCurrHorizontalMove = this._axisTable.hiz
                 }
                 break
             case 'ArrowRight':
             case 'KeyD':
                 this.right = false
                 if (!this.left) {
-                    this.horizontal = 0
+                    this._axisCurrHorizontalMove = this._axisTable.hdz
                 }
                 break
             case 'ArrowUp':
             case 'KeyW':
                 this.up = false
                 if (!this.down) {
-                    this.vertical = 0
+                    this._axisCurrVerticalMove = this._axisTable.viz
                 }
                 break
             case 'ArrowDown':
             case 'KeyS':
                 this.down = false
                 if (!this.up) {
-                    this.vertical = 0
+                    this._axisCurrVerticalMove = this._axisTable.vdz
                 }
                 break
         }
+    }
+
+    axisSensitivity = 1 / 10
+
+    protected _axisTable = {
+        hie: (dt: number) => {
+            const v = this.horizontal + dt * this.axisSensitivity
+            return v >= 1 ? 1 : v
+        },
+        hiz: (dt: number) => {
+            const v = this.horizontal + dt * this.axisSensitivity
+            return v >= 0 ? 0 : v
+        },
+        hde: (dt: number) => {
+            const v = this.horizontal - dt * this.axisSensitivity
+            return v <= -1 ? -1 : v
+        },
+        hdz: (dt: number) => {
+            const v = this.horizontal - dt * this.axisSensitivity
+            return v <= 0 ? 0 : v
+        },
+
+        vie: (dt: number) => {
+            const v = this.vertical + dt * this.axisSensitivity
+            return v >= 1 ? 1 : v
+        },
+        viz: (dt: number) => {
+            const v = this.vertical + dt * this.axisSensitivity
+            return v >= 0 ? 0 : v
+        },
+        vde: (dt: number) => {
+            const v = this.vertical - dt * this.axisSensitivity
+            return v <= -1 ? -1 : v
+        },
+        vdz: (dt: number) => {
+            const v = this.vertical - dt * this.axisSensitivity
+            return v <= 0 ? 0 : v
+        },
+    }
+
+    protected _axisCurrHorizontalMove: (dt: number) => number = this._axisTable.hiz
+    protected _axisCurrVerticalMove: (dt: number) => number = this._axisTable.viz
+
+    public update(dt: number) {
+        this.horizontal = this._axisCurrHorizontalMove(dt)
+        this.vertical = this._axisCurrVerticalMove(dt)
+    }
+
+    public onKeyPress(code: KeyboardEvent['code'], cb: () => void): void {
+        this._subscriptionDict[code] ??= []
+        this._subscriptionDict[code].push(cb)
+    }
+
+    public unsubscribeKeyPress(code: KeyboardEvent['code'], cb?: () => void): void {
+        if (!this._subscriptionDict[code]) return
+        this._subscriptionDict[code] = this._subscriptionDict[code].filter(listener => listener !== cb)
     }
 }

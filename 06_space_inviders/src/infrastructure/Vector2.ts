@@ -80,6 +80,26 @@ export class Vector2 implements IVector2 {
         return Vector2.distance(this, target)
     }
 
+    static up(): IVector2 {
+        return new Vector2(0, -1)
+    }
+
+    static down(): IVector2 {
+        return new Vector2(0, 1)
+    }
+
+    static left(): IVector2 {
+        return new Vector2(-1, 0)
+    }
+
+    static right(): IVector2 {
+        return new Vector2(1, 0)
+    }
+
+    static zero(): IVector2 {
+        return new Vector2(0, 0)
+    }
+
     static moveTo(subject: IVector2, target: IVector2, step: number): IVector2 {
         const direction = Vector2.normalize(target.sub(subject))
         subject.add(direction.mul(step))
