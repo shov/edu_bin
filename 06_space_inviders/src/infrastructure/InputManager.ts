@@ -71,21 +71,25 @@ export class InputManager implements TInput {
             case 'ArrowLeft':
             case 'KeyA':
                 this.left = true
+                if (this.horizontal > 0) this.horizontal = 0
                 this._axisCurrHorizontalMove = this._axisTable.hde
                 break
             case 'ArrowRight':
             case 'KeyD':
                 this.right = true
+                if (this.horizontal < 0) this.horizontal = 0
                 this._axisCurrHorizontalMove = this._axisTable.hie
                 break
             case 'ArrowUp':
             case 'KeyW':
                 this.up = true
+                if (this.vertical < 0) this.vertical = 0
                 this._axisCurrVerticalMove = this._axisTable.vde
                 break
             case 'ArrowDown':
             case 'KeyS':
                 this.down = true
+                if (this.vertical > 0) this.vertical = 0
                 this._axisCurrVerticalMove = this._axisTable.vie
                 break
         }

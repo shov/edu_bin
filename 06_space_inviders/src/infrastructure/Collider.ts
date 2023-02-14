@@ -7,6 +7,7 @@ export class Collider {
     }
 
     process(): { coupleList: TCollidedCouple[], tagMap: Map<IBoxCollider, Record<string, IBoxCollider[]>> } {
+        // Sort & Sweep
         type TCordRef = {
             v: number,
             pos: 'open' | 'close',
