@@ -8,8 +8,6 @@
 //////////////
 // INCLUDES //
 //////////////
-#include <windows.h>
-
 #include "d3dclass.h"
 #include "cameraclass.h"
 #include "modelclass.h"
