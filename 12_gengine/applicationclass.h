@@ -11,6 +11,9 @@
 #include <windows.h>
 
 #include "d3dclass.h"
+#include "cameraclass.h"
+#include "modelclass.h"
+#include "colorshaderclass.h"
 
 
 /////////////
@@ -40,6 +43,9 @@ private:
 
 private:
 	D3DClass* m_Direct3D;
+	CameraClass* m_Camera;
+	ModelClass* m_Model;
+	ColorShaderClass* m_ColorShader;
 };
 
 #endif

@@ -25,3 +25,7 @@ yarn-error.log*
 # linker / compiler
 *.obj
 *.pdb
+
+#logs
+video_card.txt
+/logs
