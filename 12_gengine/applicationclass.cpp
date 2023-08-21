@@ -41,7 +41,7 @@ bool ApplicationClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	m_Direct3D->GetVideoCardInfo(vc_name, vc_memory);
 
 	std::ofstream fout;
-	fout.open("video_card.txt");
+	fout.open("./video_card.txt");
 	fout << "Video Card: " << vc_name << std::endl;
 	fout << "Video Memory: " << vc_memory << std::endl;
 	fout.close();
