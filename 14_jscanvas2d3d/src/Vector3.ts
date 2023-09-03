@@ -2,6 +2,31 @@ export interface IVector3 {
   x: number;
   y: number;
   z: number;
+  // Arithmetic
+  add(v: IVector3): IVector3
+  add(n: number): IVector3
+  add(a: TVector3Array): IVector3
+  sub(v: IVector3): IVector3
+  sub(n: number): IVector3
+  sub(a: TVector3Array): IVector3
+  scale(n: number): IVector3
+  mul(v: IVector3): IVector3
+  mul(n: number): IVector3
+  mul(a: TVector3Array): IVector3
+  div(v: IVector3): IVector3
+  div(n: number): IVector3
+  div(a: TVector3Array): IVector3
+  // Math
+  length(): number
+  normalize(): IVector3
+  dot(v: IVector3): number
+  distance(v: IVector3): number
+  direction(v: IVector3): IVector3
+  // Abstract
+  clone(): IVector3
+  toArray(): TVector3Array
+  toString(): TVector3String
+  
 }
 
 export type TVector3Array = [number, number, number]
@@ -121,6 +146,16 @@ export class Vector3 implements IVector3 {
   // @url https://en.wikipedia.org/wiki/Dot_product
   public dot(v: IVector3): number {
     return this.x * v.x + this.y * v.y + this.z * v.z
+  }
+
+  public distance(v: IVector3): number {
+    const dX = this.x - v.x
+    const dY = this.y - v.y
+    return Math.sqrt(dX*dX + dY*dY)
+  }
+
+  public direction(v: IVector3): IVector3 {
+    return v.sub(this).normalize()
   }
 
   // Abstract

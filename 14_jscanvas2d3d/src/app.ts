@@ -1,6 +1,32 @@
 import { IVector3, TVector3Array, Vector3 } from "./Vector3"
 import { IVector2, Vector2 } from "./Vector2"
 
+import { Matrix } from './Matrix'
+
+let A = new Matrix([
+  [1, 2, 3],
+  [3, 4, -9],
+  [5, 6, 7],
+])
+
+let B = new Matrix([
+  [5, 6, 10],
+  [3, 4, 15],
+  [5, 6, 7],
+])
+
+let det = A.det()
+console.log(det)
+
+det = B.det()
+
+console.log(det)
+
+console.log(
+  A.mul(B).div(B)
+)
+
+
 window.addEventListener('load', () => {
   // create canvas element
   const canvas = document.createElement('canvas')
