@@ -1,12 +1,14 @@
 export class Matrix extends Array<Array<number>> {
 
-  public static readonly IDENTITY = new Matrix([
-    [1, 0, 0],
-    [0, 1, 0],
-    [0, 0, 1],
-  ])
-
-  public static readonly ZERO = new Matrix(0, 0)
+  public static readonly IDENTITY = (n: number) => new Matrix(
+    new Array(n)
+      .fill(null)
+      .map((_, y) => new Array(n)
+        .fill(0)
+        .map((_, x) => x === y ? 1 : 0)
+      )
+  )
+  public static readonly I = Matrix.IDENTITY
 
   public readonly height: number
   public readonly width: number
@@ -27,6 +29,13 @@ export class Matrix extends Array<Array<number>> {
     }
 
     h.forEach((line, i) => this[i] = [...line])
+  }
+
+  public isEqual(m: Matrix): boolean {
+    if (this.height !== m.height || this.width !== m.width) {
+      return false
+    }
+    return this.every((line, y) => line.every((v, x) => v === m[y][x]))
   }
 
   public add(m: Matrix): Matrix {

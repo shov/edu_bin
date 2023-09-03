@@ -22,6 +22,7 @@ export interface IVector3 {
   dot(v: IVector3): number
   distance(v: IVector3): number
   direction(v: IVector3): IVector3
+  cross(v: IVector3): IVector3
   // Abstract
   clone(): IVector3
   toArray(): TVector3Array
@@ -157,6 +158,17 @@ export class Vector3 implements IVector3 {
   public direction(v: IVector3): IVector3 {
     return v.sub(this).normalize()
   }
+
+  // vector product (cross product)
+  // it is a binary operation on two vectors in three-dimensional space
+  // that results in another vector which is perpendicular to the plane
+  public cross(v: IVector3): IVector3 {
+    return new Vector3(
+      this.y * v.z - this.z * v.y,
+      this.z * v.x - this.x * v.z,
+      this.x * v.y - this.y * v.x)
+  }
+
 
   // Abstract
 
