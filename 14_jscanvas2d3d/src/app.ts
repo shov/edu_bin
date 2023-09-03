@@ -1,3 +1,6 @@
+import { IVector3, TVector3Array, Vector3 } from "./Vector3"
+import { IVector2, Vector2 } from "./Vector2"
+
 window.addEventListener('load', () => {
   // create canvas element
   const canvas = document.createElement('canvas')
@@ -12,22 +15,39 @@ window.addEventListener('load', () => {
   const height = canvas.height = window.innerHeight
   document.body.appendChild(canvas)
 
-  // draw all black
-  ctx.fillStyle = 'black'
-  ctx.fillRect(0, 0, width, height)
+  //camera
+  const fov = Math.PI / 2 // field of view
+  const distanceToProjectionPlane = (width / 2) / Math.tan(fov / 2) // distance to projection plane
 
-  // thre dots coords
-  const dots = [
-    { x: 100, y: 100, speedX: 100, speedY: 100 },
-    { x: 200, y: 100, speedX: -100, speedY: 100 },
-    { x: 200, y: 200, speedX: 250, speedY: -100 },
-  ]
+  const objects: IVector3[] = ([
+    [0, 0, 3],
+    [-1, -1, 2],
+    [1, -1, 2],
+    [1, 1, 2],
+    [-1, 1, 2],
+    [-100, 1, -200],
+  ] as TVector3Array[]).map(va => new Vector3(va))
+
+  function project3DTo2D(v: IVector3): IVector2 {
+    const scale = distanceToProjectionPlane / (v.z + distanceToProjectionPlane);
+    const projectedX = (v.x * scale) + (width / 2);
+    const projectedY = (-v.y * scale) + (height / 2);
+    return new Vector2(projectedX, projectedY);
+  }
+
+  // clear screen
+  ctx.clearRect(0, 0, width, height)
+
+
 
   let lastTime = 0
   // simple game loop (60fps)
   const loop = () => {
     // clear screen
-    ctx.fillStyle = 'black'
+    ctx.clearRect(0, 0, width, height)
+
+    // fill background
+    ctx.fillStyle = 'white'
     ctx.fillRect(0, 0, width, height)
 
     // calculate dt
@@ -35,38 +55,13 @@ window.addEventListener('load', () => {
     const dt = time - lastTime
     lastTime = time
 
-    // move dots both coords with speed mul on dt
-    // if a dot behind the screen, move it to the border and invert speed
-    dots.forEach(dot => {
-      dot.x += dot.speedX * dt / 1000
-      dot.y += dot.speedY * dt / 1000
-      if (dot.x < 0) {
-        dot.x = 0
-        dot.speedX *= -1
-      }
-      if (dot.x > width) {
-        dot.x = width
-        dot.speedX *= -1
-      }
-      if (dot.y < 0) {
-        dot.y = 0
-        dot.speedY *= -1
-      }
-      if (dot.y > height) {
-        dot.y = height
-        dot.speedY *= -1
-      }
-    })
-
-    // render lines between dots
-    ctx.strokeStyle = 'white'
-    ctx.beginPath()
-    ctx.moveTo(dots[0].x, dots[0].y)
-    ctx.lineTo(dots[1].x, dots[1].y)
-    ctx.lineTo(dots[2].x, dots[2].y)
-    ctx.lineTo(dots[0].x, dots[0].y)
-    ctx.stroke()
-
+    for (const v3 of objects) {
+      const v = project3DTo2D(v3);
+      ctx.fillStyle = 'black'
+      ctx.beginPath();
+      ctx.arc(v.x, v.y, 5, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     window.requestAnimationFrame(loop)
   }
