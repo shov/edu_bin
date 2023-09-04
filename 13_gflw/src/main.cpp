@@ -87,8 +87,12 @@ int main(void)
     if (!glfwInit())
         return -1;
 
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     // Create windowed mode window and its OpenGL context
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
+    window = glfwCreateWindow(640, 480, "TIK TAK", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -97,6 +101,8 @@ int main(void)
 
     // Make the window's context current
     glfwMakeContextCurrent(window);
+
+    glfwSwapInterval(1);
 
     // Init glew. must be after glfwMakeContextCurrent
     if (glewInit() != GLEW_OK)
@@ -109,7 +115,7 @@ int main(void)
     }
 
     float positions[] = {
-        -0.5f, 0.0f,
+        -0.5f, -1.0f,
         0.0f, 0.5f,
         0.0f, 0.0f,
         -0.5f, 0.5f};
@@ -118,17 +124,22 @@ int main(void)
         0, 1, 2,
         0, 3, 1};
 
+
+    unsigned int vao;
+    GL_CALL(glGenVertexArrays(1, &vao));
+    GL_CALL(glBindVertexArray(vao));
+
     unsigned int posBuffer;
     GL_CALL(glGenBuffers(1, &posBuffer));
     GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, posBuffer));
-    GL_CALL(glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 8, positions, GL_DYNAMIC_DRAW));
+    GL_CALL(glBufferData(GL_ARRAY_BUFFER, 2 * 4 * sizeof(float), positions, GL_DYNAMIC_DRAW));
 
-    GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
     GL_CALL(glEnableVertexAttribArray(0));
+    GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
 
-    unsigned int indexBuffer;
-    GL_CALL(glGenBuffers(1, &indexBuffer));
-    GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer));
+    unsigned int ibo;
+    GL_CALL(glGenBuffers(1, &ibo));
+    GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
     GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, indices, GL_DYNAMIC_DRAW));
 
     // Shaders
@@ -138,6 +149,9 @@ int main(void)
     unsigned int shader = CreateShader(vertexShader, fragmentShader);
     GL_CALL(glUseProgram(shader));
 
+    GL_CALL(int location = glGetUniformLocation(shader, "u_Color"));
+    ASSERT(-1 != location);
+    
     // Check if program been validated successfully
     {
         int result;
@@ -157,14 +171,30 @@ int main(void)
         }
     }
 
+    
+
+    float r = 0.0f;
+    float increment = 0.01f;
     // Game loop
     while (!glfwWindowShouldClose(window))
     {
         // Render
         GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
 
+        GL_CALL(glUniform4f(location, r, 0.5f, 0.5f, 1.0f));
+
         // Draw a triangle
         GL_CALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+
+        if (r > 1.0f)
+        {
+            increment = -0.01f;
+        }
+        else if (r < 0.0f)
+        {
+            increment = 0.01f;
+        }
+        r += increment;
 
 
         // Swap buffers
