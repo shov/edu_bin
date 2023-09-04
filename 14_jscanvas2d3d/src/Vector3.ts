@@ -23,6 +23,7 @@ export interface IVector3 {
   distance(v: IVector3): number
   direction(v: IVector3): IVector3
   cross(v: IVector3): IVector3
+  reflect(normal: IVector3): IVector3
   // Abstract
   clone(): IVector3
   toArray(): TVector3Array
@@ -167,6 +168,10 @@ export class Vector3 implements IVector3 {
       this.y * v.z - this.z * v.y,
       this.z * v.x - this.x * v.z,
       this.x * v.y - this.y * v.x)
+  }
+
+  public reflect(normal: IVector3): IVector3 {
+    return this.sub(normal.scale(2 * this.dot(normal)))
   }
 
 

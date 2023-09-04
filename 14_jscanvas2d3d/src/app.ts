@@ -13,10 +13,10 @@ var camera = {
 
 var sphere = {
   center: new Vector3(0, 0, 5),
-  radius: 1,
+  radius: 2,
 }
 
-var lightPos = new Vector3(2, 2, 10)
+var lightPos = new Vector3(2, -2, 2)
 
 window.addEventListener('load', () => {
   // create canvas element
@@ -90,7 +90,7 @@ function traceRays(ctx: CanvasRenderingContext2D) {
 
   // calculate screen corner
   const screenCorner =
-    camera.pos.sub(right.mul(halfWidth)).add(up.mul(halfHeight)).add(forward.mul(2))
+    camera.pos.sub(right.mul(halfWidth)).add(up.mul(halfHeight)).add(forward.mul(1))
 
     console.log(screenCorner.toString())
 
@@ -117,20 +117,35 @@ function traceRays(ctx: CanvasRenderingContext2D) {
         const normal = intersection.sub(sphere.center).normalize()
         // calculate light direction
         const lightDir = intersection.sub(lightPos).normalize()
-        // calculate diffuse
-        console.log('dot to light', normal.dot(lightDir))
-        const diffuse = Math.max(0, normal.dot(lightDir))
-        // calculate color
-        const color = Math.round(diffuse * 255)
-        // set pixel
-
-        ctx.fillStyle = `rgb(${color}, ${color}, ${color})`
         
+        // Calculate reflection vector
+        const reflection = lightDir.reflect(normal);
+
+        // Calculate view vector
+        const viewDir = camera.pos.sub(intersection).normalize()
+
+        // Calculate specular reflection factor (shininess controls sharpness)
+        const shininess = 128; // You can adjust this value
+        const specularFactor = Math.pow(Math.max(0, reflection.dot(viewDir)), shininess);
+
+        // Calculate specular color component
+        const specular = Math.round(specularFactor * 255);
+
+        // calculate diffuse
+        const diffuse = Math.max(0, normal.dot(lightDir))
+
+        // calculate color
+        const diffuseColor = Math.round(diffuse * 255)
+        const specularColor = Math.round(specular * 255)
+        const colorLight = Math.max(50, diffuseColor + specularColor > 255 ? 255 : diffuseColor + specularColor)
+
+        // set pixel as golden with color light for diffuse and specular
+        ctx.fillStyle = `rgb(${colorLight * 1}, ${colorLight * 0.8431372549019608}, ${colorLight * 0})`
+
         ctx.fillRect(x, y, 1, 1)
-        console.log(`rgb(${color}, ${color}, ${color})`, x, y)
       } else {
-        // set pixel
-        ctx.fillStyle = `rgb(0, 0, 0)`
+        // set pixel sky blue
+        ctx.fillStyle = 'rgb(135, 206, 235)'
         ctx.fillRect(x, y, 1, 1)
         console.log('b', x, y)
       }
@@ -160,7 +175,7 @@ function intersectRaySphere(
 
   if (t1 >= 0 || t2 >= 0) {
     // At least one intersection point is in front of the ray's origin
-    const t = (t1 < t2 && t1 >= 0) ? t1 : t2;
+    const t = (t1 < t2 && t1 >= 0) ? t2 : t1;
     return origin.add(ray.mul(t));
   }
 
