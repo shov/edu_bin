@@ -11,7 +11,12 @@ include_directories(${GLEW_DIR}/include)
 add_definitions(-DGLEW_STATIC)
 
 # add_definitions(-DUNICODE)
-add_executable(glfw_test src/main.cpp)
+add_executable(glfw_test 
+    src/main.cpp
+    src/Renderer.cpp
+    src/VertexBuffer.cpp
+    src/IndexBuffer.cpp
+)
 
 # Link against the GLFW library
 target_link_libraries(glfw_test PRIVATE 

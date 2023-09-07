@@ -4,23 +4,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#define ASSERT(x) do {if (!(x)) __debugbreak();} while (0)
-#define GL_CALL(x) x; ASSERT(GLErrorHandler(#x, __FILE__, __LINE__))
-
-static bool GLErrorHandler(const char* function, const char* file, int line)
-{
-    bool noErrors = true;
-    GLenum error = glGetError();
-    while (error != GL_NO_ERROR)
-    {
-        std::cout
-            << file << ":" << line << " " << function << std::endl 
-            << "\tOpenGL error: " << error << std::endl;
-        noErrors = false;
-        error = glGetError();
-    }
-    return noErrors;
-}
+#include "Renderer.h"
 
 // load shader from file function
 static std::string LoadShaderFromFile(const std::string &filepath)
@@ -115,14 +99,15 @@ int main(void)
     }
 
     float positions[] = {
-        -0.5f, -1.0f,
-        0.0f, 0.5f,
-        0.0f, 0.0f,
-        -0.5f, 0.5f};
+        -0.5f, -0.5f,
+        0.5f, -0.5f,
+        -0.5f, 0.5f,
+        0.5f, 0.5f
+        };
 
     unsigned int indices[] = {
-        0, 1, 2,
-        0, 3, 1};
+        2,1,3,
+        2,0,1};
 
 
     unsigned int vao;
