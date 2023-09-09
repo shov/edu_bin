@@ -16,6 +16,7 @@ add_executable(glfw_test
     src/Renderer.cpp
     src/VertexBuffer.cpp
     src/IndexBuffer.cpp
+    src/VertexArray.cpp
 )
 
 # Link against the GLFW library

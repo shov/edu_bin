@@ -5,6 +5,9 @@
 #include <GLFW/glfw3.h>
 
 #include "Renderer.h"
+#include "VertexBuffer.h"
+#include "IndexBuffer.h"
+#include "VertexArray.h"
 
 // load shader from file function
 static std::string LoadShaderFromFile(const std::string &filepath)
@@ -63,6 +66,25 @@ static int CreateShader(const std::string &vertexShader, const std::string &frag
     return program;
 }
 
+void ValidateProgram(unsigned int shader)
+{
+    int result;
+    GL_CALL(glGetProgramiv(shader, GL_VALIDATE_STATUS, &result));
+    if (GL_FALSE == result)
+    {
+        int length;
+        GL_CALL(glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &length));
+        char *message = (char *)(alloca(length * sizeof(char)));
+        GL_CALL(glGetProgramInfoLog(shader, length, &length, message));
+        std::cout << "Failed to validate program!" << std::endl;
+        std::cout << message << std::endl;
+    }
+    else
+    {
+        std::cout << "Program validated successfully!" << std::endl;
+    }
+}
+
 int main(void)
 {
     GLFWwindow *window;
@@ -71,12 +93,12 @@ int main(void)
     if (!glfwInit())
         return -1;
 
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // Create windowed mode window and its OpenGL context
-    window = glfwCreateWindow(640, 480, "TIK TAK", NULL, NULL);
+    window = glfwCreateWindow(800, 600, "TIK TAK", NULL, NULL);
     if (!window)
     {
         glfwTerminate();
@@ -98,99 +120,83 @@ int main(void)
         std::cout << "GLEW INIT OK " << glGetString(GL_VERSION) << std::endl;
     }
 
-    float positions[] = {
-        -0.5f, -0.5f,
-        0.5f, -0.5f,
-        -0.5f, 0.5f,
-        0.5f, 0.5f
-        };
-
-    unsigned int indices[] = {
-        2,1,3,
-        2,0,1};
-
-
-    unsigned int vao;
-    GL_CALL(glGenVertexArrays(1, &vao));
-    GL_CALL(glBindVertexArray(vao));
-
-    unsigned int posBuffer;
-    GL_CALL(glGenBuffers(1, &posBuffer));
-    GL_CALL(glBindBuffer(GL_ARRAY_BUFFER, posBuffer));
-    GL_CALL(glBufferData(GL_ARRAY_BUFFER, 2 * 4 * sizeof(float), positions, GL_DYNAMIC_DRAW));
-
-    GL_CALL(glEnableVertexAttribArray(0));
-    GL_CALL(glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 2, 0));
-
-    unsigned int ibo;
-    GL_CALL(glGenBuffers(1, &ibo));
-    GL_CALL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
-    GL_CALL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * 6, indices, GL_DYNAMIC_DRAW));
-
-    // Shaders
-    std::string vertexShader = LoadShaderFromFile("../shaders/vertex.glsl");
-    std::string fragmentShader = LoadShaderFromFile("../shaders/fragment.glsl");
-
-    unsigned int shader = CreateShader(vertexShader, fragmentShader);
-    GL_CALL(glUseProgram(shader));
-
-    GL_CALL(int location = glGetUniformLocation(shader, "u_Color"));
-    ASSERT(-1 != location);
-    
-    // Check if program been validated successfully
     {
-        int result;
-        GL_CALL(glGetProgramiv(shader, GL_VALIDATE_STATUS, &result));
-        if (GL_FALSE == result)
+        float positions[] = {
+            -0.5f, -0.5f,
+            0.5f, -0.5f,
+            -0.5f, 0.5f,
+            0.5f, 0.5f};
+
+        unsigned int indices[] = {
+            2, 1, 3,
+            2, 0, 1};
+
+        VertexArray va;
+        VertexBuffer vb(positions, 4 * 2 * sizeof(float));
+        VertexBufferLayout layout;
+        layout.Push<float>(2);
+        va.AddBuffer(vb, layout);
+
+        IndexBuffer ib(indices, 6);
+
+        // Shaders
+        std::string vertexShader = LoadShaderFromFile("../shaders/vertex.glsl");
+        std::string fragmentShader = LoadShaderFromFile("../shaders/fragment.glsl");
+
+        unsigned int shader = CreateShader(vertexShader, fragmentShader);
+        GL_CALL(glUseProgram(shader));
+
+        // uniform location u_Color
+        GL_CALL(int location = glGetUniformLocation(shader, "u_Color"));
+        ASSERT(-1 != location);
+
+        // Check if program been validated successfully
+        ValidateProgram(shader);
+
+        // Unbind everything
+        va.Unbind();
+        GL_CALL(glUseProgram(0));
+        vb.Unbind();
+        ib.Unbind();
+
+        float r = 0.0f;
+        float increment = 0.01f;
+        // Game loop
+        while (!glfwWindowShouldClose(window))
         {
-            int length;
-            GL_CALL(glGetProgramiv(shader, GL_INFO_LOG_LENGTH, &length));
-            char *message = (char *)(alloca(length * sizeof(char)));
-            GL_CALL(glGetProgramInfoLog(shader, length, &length, message));
-            std::cout << "Failed to validate program!" << std::endl;
-            std::cout << message << std::endl;
+            // Render
+            GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
+
+            // Bind shader
+            GL_CALL(glUseProgram(shader));
+            GL_CALL(glUniform4f(location, r, 0.5f, 0.5f, 1.0f));
+
+            // Bind vertex array
+            va.Bind();
+            ib.Bind();
+
+            // Draw a triangle
+            GL_CALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
+
+            if (r > 1.0f)
+            {
+                increment = -0.01f;
+            }
+            else if (r < 0.0f)
+            {
+                increment = 0.01f;
+            }
+            r += increment;
+
+            // Swap buffers
+            GL_CALL(glfwSwapBuffers(window));
+
+            // Poll events
+            GL_CALL(glfwPollEvents());
         }
-        else
-        {
-            std::cout << "Program validated successfully!" << std::endl;
-        }
+
+        GL_CALL(glDeleteProgram(shader));
     }
-
-    
-
-    float r = 0.0f;
-    float increment = 0.01f;
-    // Game loop
-    while (!glfwWindowShouldClose(window))
-    {
-        // Render
-        GL_CALL(glClear(GL_COLOR_BUFFER_BIT));
-
-        GL_CALL(glUniform4f(location, r, 0.5f, 0.5f, 1.0f));
-
-        // Draw a triangle
-        GL_CALL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr));
-
-        if (r > 1.0f)
-        {
-            increment = -0.01f;
-        }
-        else if (r < 0.0f)
-        {
-            increment = 0.01f;
-        }
-        r += increment;
-
-
-        // Swap buffers
-        GL_CALL(glfwSwapBuffers(window));
-
-        // Poll events
-        GL_CALL(glfwPollEvents());
-    }
-
-    GL_CALL(glDeleteProgram(shader));
-
     glfwTerminate();
     return 0;
 }
