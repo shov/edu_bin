@@ -106,7 +106,7 @@ export class Snake extends AEntity {
         this.grow()
       }
 
-      while(this.toGrow > 0) {
+      while (this.toGrow > 0) {
         this.grow()
         this.toGrow--
       }
@@ -159,9 +159,21 @@ export class Snake extends AEntity {
   }
 
   public render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number): void {
-    this.segmentList.forEach(seg => {
+    this.segmentList.slice(1).forEach(seg => {
       seg.render(ctx, this.gc)
     })
+    // draw head
+    let angle: number = 0
+    if (this.deltaLoc.equal(Vector2.up())) {
+      angle = 0
+    } else if (this.deltaLoc.equal(Vector2.down())) {
+      angle = Math.PI
+    } else if (this.deltaLoc.equal(Vector2.left())) {
+      angle = Math.PI * 1.5
+    } else if (this.deltaLoc.equal(Vector2.right())) {
+      angle = Math.PI / 2
+    }
+    this.gc.drawSpriteOnBoard(ctx, this.head.location, this.scene.imageLoader.get('snek')!, angle)
   }
 
   public reset() {

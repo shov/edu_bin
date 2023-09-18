@@ -27,7 +27,7 @@ export abstract class AEntity implements IEntity {
     constructor(public name: string = 'unnamed' + crypto.randomUUID()) {
     }
 
-    public init(scene: AScene): void {
+    public init(scene: AScene): void | Promise<void> {
         this.scene = scene
     }
 

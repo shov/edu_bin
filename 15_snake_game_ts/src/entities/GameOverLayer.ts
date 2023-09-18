@@ -11,6 +11,9 @@ export class GameOverLayer extends AEntity {
 
   }
 
+  readonly GO_TEXT = 'GAME OVER SNEK!'
+  readonly PLAY_AGAIN_TEXT = '[ PRESS SPACE TO RESTART ]'
+
   maxForBlink = 24;
   blinkCounter = 0
 
@@ -18,13 +21,15 @@ export class GameOverLayer extends AEntity {
     if (this.gc.isGameOver) {
       ctx.fillStyle = 'red'
       ctx.font = '40px bold'
-      ctx.fillText('GAME OVER SNEK!', this.scene.frameSize.w / 2 - 170, this.scene.frameSize.h / 2);
+      const mt = ctx.measureText(this.GO_TEXT)
+      ctx.fillText(this.GO_TEXT, this.scene.frameSize.w / 2 - mt.width / 2, this.scene.frameSize.h / 2);
 
       this.blinkCounter++
       if (this.blinkCounter < this.maxForBlink / 2) {
         ctx.fillStyle = 'yellow'
         ctx.font = '16px bold'
-        ctx.fillText('[ PRESS SPACE TO RESTART ]', this.scene.frameSize.w / 2 - 90, this.scene.frameSize.h / 2 + 45);
+        const mt = ctx.measureText(this.PLAY_AGAIN_TEXT)
+        ctx.fillText(this.PLAY_AGAIN_TEXT, this.scene.frameSize.w / 2 - mt.width / 2, this.scene.frameSize.h / 2 + 45);
       } else if (this.blinkCounter >= this.maxForBlink) {
         this.blinkCounter = 0
       }

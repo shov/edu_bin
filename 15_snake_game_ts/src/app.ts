@@ -14,6 +14,11 @@ window.addEventListener('load', () => {
     const inputManager = new InputManager()
     const defaultScene = new DefaultScene()
     const engine = new Engine()
-    engine.start(canvas, canvas.getContext('2d')!, inputManager, defaultScene)
+    
+    Promise.resolve(
+        engine.start(canvas, canvas.getContext('2d')!, inputManager, defaultScene)
+    ).catch(e => (
+        console.error(e)
+    ))
 
 })

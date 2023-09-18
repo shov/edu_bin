@@ -25,7 +25,7 @@ export class Engine {
 
     protected _currentScene!: AScene
 
-    public start(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, input: InputManager, scene: AScene) {
+    public async start(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, input: InputManager, scene: AScene) {
 
         this._canvas = canvas
         this._ctx = ctx
@@ -36,7 +36,8 @@ export class Engine {
             this.isDebugOn = !this.isDebugOn
         })
         this._input.start()
-        scene.init(this, canvas)
+        
+        await Promise.resolve(scene.init(this, canvas))
 
         this._lastFrameTime = Date.now()
         requestAnimationFrame(time => this._gameLoop(time))

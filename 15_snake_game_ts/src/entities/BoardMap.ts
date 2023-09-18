@@ -11,6 +11,7 @@ export class BoardMap extends AEntity {
   protected wallList: IVector2[] = []
 
   public init(scene: AScene): void {
+    super.init(scene)
     this.gc = scene.get<GameController>('gameController')!
 
     this.setupWalls()
@@ -18,7 +19,7 @@ export class BoardMap extends AEntity {
 
   public render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number): void {
     this.wallList.forEach(wall => {
-      this.gc.drawCell(ctx, wall, this.color)
+      this.gc.drawSpriteOnBoard(ctx, wall, this.scene.imageLoader.get('wall')!)
     })
   }
 

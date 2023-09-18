@@ -4,12 +4,15 @@ import {TInput} from './InputManager'
 import {IBoxCollider} from '../mixins/boxCollieder'
 import {Collider} from './Collider'
 import {ISize2, Size2} from './Size2'
+import { ImageLoader } from './ImageLoader'
 
 export abstract class AScene {
     protected _engine!: Engine
     protected _entityMap: { [name: string]: IEntity } = {}
     protected _tagDict: { [tag: string]: string[] } = {} // tag -> nameList
     protected _collisionBodyMap: { [name: string]: IBoxCollider } = {}
+
+    public readonly imageLoader: ImageLoader = new ImageLoader() // todo asset or resource loader
 
     public get entityList(): IEntity[] {
         return Object.values(this._entityMap)
@@ -21,12 +24,11 @@ export abstract class AScene {
 
     public frameSize: ISize2 = new Size2(0, 0)
 
-    public init(engine: Engine, canvas: HTMLCanvasElement) {
+    public init(engine: Engine, canvas: HTMLCanvasElement): void | Promise<void> {
         this.frameSize = new Size2(canvas.width, canvas.height)
         this._engine = engine
-        this.entityList.forEach(entity => {
-            entity.init(this)
-        })
+
+        return Promise.resolve(Promise.all(this.entityList.map(entity => entity.init(this)))).then()
     }
 
     public update(dt: number, input: TInput) {

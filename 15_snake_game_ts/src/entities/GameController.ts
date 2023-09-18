@@ -1,6 +1,7 @@
 import { AEntity } from "../infrastructure/AEntity"
 import { AScene } from "../infrastructure/AScene"
 import { TInput } from "../infrastructure/InputManager"
+import { mixin } from "../infrastructure/Mixer"
 import { ISize2, Size2 } from "../infrastructure/Size2"
 import { IVector2, Vector2 } from "../infrastructure/Vector2"
 import { Apple } from "./Apple"
@@ -30,9 +31,11 @@ export class GameController extends AEntity {
 
   protected boardMap!: BoardMap
 
-  public init(scene: AScene): void {
+  public init(scene: AScene) {
     super.init(scene)
+
     this._boardSize = new Size2((scene.frameSize.w / this.cellSize) | 0, (scene.frameSize.h / this.cellSize) | 0)
+
     this.snek = this.scene.get<Snake>('snake')!
     this.boardMap = this.scene.get<BoardMap>('boardMap')!
   }
@@ -92,7 +95,7 @@ export class GameController extends AEntity {
             )
           } while (takenLocations.some(t => t.equal(appleLoc)))
 
-          const newApple = new Apple(appleLoc)
+          const newApple = new Apple(appleLoc, this.scene.imageLoader.get('apple')!)
           this.scene.add(newApple)
           newApple.init(this.scene)
           this.appleList.push(newApple)
@@ -128,6 +131,18 @@ export class GameController extends AEntity {
         this.cellSize - this.padding * 2
       )
     }
+  }
+
+  public drawSpriteOnBoard(ctx: CanvasRenderingContext2D, location: IVector2, sprite: HTMLImageElement, angle?: number) {
+    if('number' === typeof angle) {
+      ctx.translate(location.x * this.cellSize + sprite.width / 2, location.y * this.cellSize + sprite.height / 2)
+      ctx.rotate(angle)
+      ctx.drawImage(sprite, -sprite.width / 2, -sprite.height / 2)
+      ctx.setTransform(1, 0, 0, 1, 0, 0)
+      return
+    }
+
+    ctx.drawImage(sprite, location.x * this.cellSize, location.y * this.cellSize)
   }
 
   public gameOver() {
