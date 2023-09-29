@@ -5,26 +5,27 @@ import { AEntity } from "../infrastructure/AEntity";
 import { ISize2, Size2 } from "../infrastructure/Size2";
 import { ImageResource } from "../infrastructure/ImageResource";
 
+export enum EAnchor {
+  LT, CENTER
+}
+
 interface ISpriteComposition {
-  anchor: IVector2
   size: ISize2
+  animation: AnimationComposition
 
-  getLocalCenter(): IVector2
-  setSizeFromImage(): void
-  setAnchorToCenter(): void
-  render(ctx: CanvasRenderingContext2D, dt: number, position: IVector2, angle?: number): void
-
-  // animation
-  // config
-  // play
-  // stop
+  setAnchor(anchor: EAnchor): void
+  render(ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number, position: IVector2, angle?: number): void
 }
 
 class SpriteComposition implements ISpriteComposition {
-  public anchor: IVector2 = Vector2.zero()
   public size: ISize2 = new Size2(0, 0)
+  public animation: AnimationComposition = new AnimationComposition()
+
+  protected anchor: EAnchor = EAnchor.CENTER
+  protected offset: IVector2 = Vector2.zero()
 
   protected image!: HTMLImageElement
+
 
   constructor(protected target: AEntity, protected filePath: string) {
     if ('string' !== typeof filePath || filePath.length < 0) {
@@ -34,31 +35,58 @@ class SpriteComposition implements ISpriteComposition {
     this.target['resourceList'].push(new ImageResource(filePath, filePath))
   }
 
-  getLocalCenter(): IVector2 {
-    return new Vector2(this.size.w / 2, this.size.h / 2)
+  setAnchor(anchor: EAnchor) {
+    this.anchor = anchor
   }
 
-  setSizeFromImage(): void {
+  render(ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number, position: IVector2, angle?: number | undefined): void {
     this.makeSureImage()
-    this.size = new Size2(this.image.width, this.image.height)
-  }
 
-  setAnchorToCenter(): void {
-    this.anchor = this.getLocalCenter().mul(-1)
-  }
+    // set offset and size of a current frame
+    if (this.animation.isPLayed) {
+      const data = this.animation.trackPlayback(dt, delta, fps)
+      this.size = data.size
+      this.offset = data.offset
+    }
 
-  render(ctx: CanvasRenderingContext2D, dt: number, position: IVector2, angle?: number | undefined): void {
-    this.makeSureImage()
+    const anchor = this.getAnchorOffset()
 
     if ('number' === typeof angle) {
-      ctx.translate(position.x + this.anchor.x, position.y + this.anchor.y)
+      ctx.translate(position.x + anchor.x, position.y + anchor.y)
       ctx.rotate(angle)
-      ctx.drawImage(this.image, this.anchor.x, this.anchor.y)
+      ctx.drawImage(
+        this.image,
+        this.offset.x,
+        this.offset.y,
+        this.size.w,
+        this.size.h,
+        anchor.x,
+        anchor.y,
+        this.size.w,
+        this.size.h
+      )
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       return
     }
 
-    ctx.drawImage(this.image, position.x + this.anchor.x, position.y + this.anchor.y)
+    ctx.drawImage(
+      this.image,
+      this.offset.x,
+      this.offset.y,
+      this.size.w,
+      this.size.h,
+      position.x + anchor.x,
+      position.y + anchor.y,
+      this.size.w,
+      this.size.h
+    )
+  }
+
+  protected getAnchorOffset(): IVector2 {
+    if (EAnchor.LT === this.anchor) {
+      return Vector2.zero()
+    }
+    return new Vector2(this.size.w, this.size.h).mul(-0.5)
   }
 
   protected makeSureImage() {
@@ -69,6 +97,68 @@ class SpriteComposition implements ISpriteComposition {
       }
     }
   }
+}
+
+type TAnimation = {
+  name: string,
+  frameSize: ISize2,
+  frameDuration: number, // ms
+  firstFrameOffset: IVector2,
+  nextFrameOffset: IVector2,
+  length: number, // number of frames
+}
+
+type TAnimationCompositionTrackData = { size: ISize2, offset: IVector2 }
+class AnimationComposition {
+  public isPLayed: boolean = false
+
+  protected animationDict: Record<string, TAnimation> = {}
+  protected playedName?: string
+  protected accDelta: number = 0
+  protected currFrame: number = 0
+
+  addAnimation(animation: TAnimation): void
+  addAnimation(animationList: TAnimation[]): void
+  addAnimation(a: TAnimation | TAnimation[]): void {
+    const animationList = Array.isArray(a) ? a : [a]
+    animationList.forEach(a => this.animationDict[a.name] = a)
+    return
+  }
+
+  play(name: string) {
+    if ('object' !== typeof this.animationDict[name]) {
+      throw new Error(`Cannot play animation ${name}, not found`)
+    }
+    if (!this.isPLayed || this.playedName !== name) {
+      this.isPLayed = true
+      this.playedName = name
+      this.accDelta = 0
+      this.currFrame = 0
+    }
+  }
+
+  stop() {
+    this.isPLayed = false
+  }
+
+  trackPlayback(dt: number, delta: number, fps: number): TAnimationCompositionTrackData {
+    if (!this.isPLayed || 'string' !== typeof this.playedName) {
+      throw new Error(`Cannot track playback, it's stopped or no name set`)
+    }
+
+    const ani = this.animationDict[this.playedName]
+
+    // calculate current frame 
+    const timePassed = this.accDelta + delta
+    this.currFrame = (this.currFrame + (timePassed / ani.frameDuration) | 0) % ani.length
+    this.accDelta = timePassed % ani.frameDuration
+
+    return {
+      size: ani.frameSize.clone(),
+      offset: ani.firstFrameOffset.add(ani.nextFrameOffset.mul(this.currFrame))
+    }
+  }
+
 }
 
 export interface ISprite {

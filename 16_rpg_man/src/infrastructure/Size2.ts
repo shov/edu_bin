@@ -9,6 +9,8 @@ export interface ISize2 {
     mul(size: ISize2): ISize2
 
     mul(scalar: number): ISize2
+
+    clone(): ISize2
 }
 
 export class Size2 implements ISize2 {
@@ -50,5 +52,9 @@ export class Size2 implements ISize2 {
         this.w *= subj.w
         this.h *= subj.h
         return this
+    }
+
+    clone(): ISize2 {
+        return new Size2(this)
     }
 }
