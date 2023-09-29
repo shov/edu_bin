@@ -1,7 +1,7 @@
 import {ITransform} from './transform'
 import {IVector2, Vector2} from '../infrastructure/Vector2'
 import {IEntity} from '../infrastructure/AEntity'
-import {MIXIN_NAME_SYMBOL, MIXIN_REQUIRE_SYMBOL} from '../infrastructure/Mixer'
+import {COMPONENT_NAME_SYMBOL, COMPONENT_REQUIRE_SYMBOL} from '../infrastructure/addComponent'
 
 export type TVertices4 = [IVector2, IVector2, IVector2, IVector2]
 
@@ -23,9 +23,12 @@ export interface IBoxCollider extends ITransform, IEntity {
     callTagCollision(tag: string, bodyList: IBoxCollider[]): void
 }
 
+/**
+ * @deprecated TODO REFACTOR 
+ */
 export const boxCollider = {
-    [MIXIN_NAME_SYMBOL]: 'boxCollider',
-    [MIXIN_REQUIRE_SYMBOL]: ['transform'],
+    [COMPONENT_NAME_SYMBOL]: 'boxCollider',
+    [COMPONENT_REQUIRE_SYMBOL]: ['transform'],
 
     vertices(this: IBoxCollider & ITransform): TVertices4 {
         const topLeft = this.scruff

@@ -1,5 +1,7 @@
-import {AScene} from './AScene'
-import {TInput} from './InputManager'
+import { AResource } from './AResource'
+import { AScene } from './AScene'
+import { TInput } from './InputManager'
+import { COMPONENT_CONSTRUCTOR_DICT, COMPONENT_CONSTRUCTOR_LAST_OPTIONS_DICT } from './addComponent'
 
 export interface IComponentMadeOF {
     componentList: string[]
@@ -9,6 +11,8 @@ export interface IEntity {
     scene: AScene,
     tagList: string[]
     name: string
+
+    load(scene: AScene): Promise<void>
 
     init(scene: AScene): void
 
@@ -24,7 +28,24 @@ export abstract class AEntity implements IEntity {
 
     public tagList: string[] = []
 
+    protected resourceList: AResource[] = []
+
     constructor(public name: string = 'unnamed' + crypto.randomUUID()) {
+        // run mixed components constructors
+        ; (this.constructor.prototype.componentList || []).forEach((componentName: string) => {
+            const componentConstructor = this.constructor.prototype?.[COMPONENT_CONSTRUCTOR_DICT]?.[componentName]
+            if ('function' === typeof componentConstructor) {
+                const options = this.constructor.prototype?.[COMPONENT_CONSTRUCTOR_LAST_OPTIONS_DICT]?.[componentName]
+                componentConstructor.call(this, options || {})
+                if (void 0 !== options) {
+                    delete this.constructor.prototype[COMPONENT_CONSTRUCTOR_DICT][componentName]
+                }
+            }
+        })
+    }
+
+    public load(scene: AScene): Promise<void> {
+        return Promise.resolve(Promise.all(this.resourceList.map(r => r.load(scene)))).then()
     }
 
     public init(scene: AScene): void | Promise<void> {

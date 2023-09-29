@@ -1,9 +1,9 @@
-import {AEntity, IComponentMadeOF, IEntity} from './AEntity'
-import {Engine} from './Engine'
-import {TInput} from './InputManager'
-import {IBoxCollider} from '../components/boxCollieder'
-import {Collider} from './Collider'
-import {ISize2, Size2} from './Size2'
+import { AEntity, IComponentMadeOF, IEntity } from './AEntity'
+import { Engine } from './Engine'
+import { TInput } from './InputManager'
+import { IBoxCollider } from '../components/boxCollieder'
+import { Collider } from './Collider'
+import { ISize2, Size2 } from './Size2'
 import { ImageLoader } from './ImageLoader'
 
 export abstract class AScene {
@@ -28,12 +28,15 @@ export abstract class AScene {
         this.frameSize = new Size2(canvas.width, canvas.height)
         this._engine = engine
 
-        return Promise.resolve(Promise.all(this.entityList.map(entity => entity.init(this)))).then()
+        return Promise.resolve(
+            Promise.all(this.entityList.map(entity => entity.load(this)))
+            .then(() => Promise.all(this.entityList.map(entity => entity.init(this))))
+        ).then()
     }
 
     public update(dt: number, input: TInput) {
         // Collisions
-        const {coupleList, tagMap} = new Collider(this.collisionBodyList)
+        const { coupleList, tagMap } = new Collider(this.collisionBodyList)
             .process()
 
         coupleList.forEach(([a, b]) => {
@@ -41,13 +44,13 @@ export abstract class AScene {
             b.callCollision(a)
         })
 
-        ;[...tagMap.keys()].forEach(b => {
-            const oneTagBranch: Record<string, IBoxCollider[]> = tagMap.get(b)!
+            ;[...tagMap.keys()].forEach(b => {
+                const oneTagBranch: Record<string, IBoxCollider[]> = tagMap.get(b)!
 
-            Object.keys(oneTagBranch).forEach(tag => {
-                b.callTagCollision(tag, oneTagBranch[tag])
+                Object.keys(oneTagBranch).forEach(tag => {
+                    b.callTagCollision(tag, oneTagBranch[tag])
+                })
             })
-        })
 
         // Update
         for (const entity of this.entityList) {
@@ -101,7 +104,7 @@ export abstract class AScene {
     }
 
     public get<EntityType extends AEntity = AEntity>(name: string): EntityType | undefined {
-        return this._entityMap[name] as EntityType
+        return this._entityMap[name] as unknown as EntityType
     }
 
     public findByTag<EntityType extends AEntity = AEntity>(tag: string): EntityType[] {

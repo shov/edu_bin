@@ -4,7 +4,7 @@ export class ImageLoader {
   protected _map: Map<string, HTMLImageElement> = new Map()
 
   public async load(name: string, src: string): Promise<void> {
-    return new Promise((r, j) => {
+    return new Promise((r, j) => { 
       const img = new Image()
       img.src = src
       img.onerror = j

@@ -1,6 +1,6 @@
 import {IVector2, Vector2} from '../infrastructure/Vector2'
 import {ISize2, Size2} from '../infrastructure/Size2'
-import {MIXIN_NAME_SYMBOL} from '../infrastructure/Mixer'
+import {COMPONENT_NAME_SYMBOL} from '../infrastructure/addComponent'
 
 export interface ITransform {
     position: Readonly<IVector2>
@@ -15,8 +15,11 @@ export interface ITransform {
     distanceTo(target: ITransform): number
 }
 
+/**
+ * @deprecated TODO refactor
+ */
 export const transform: TComponent = {
-    [MIXIN_NAME_SYMBOL]: 'transform',
+    [COMPONENT_NAME_SYMBOL]: 'transform',
 
     ['$transform.position.x']: 0,
     ['$transform.position.y']: 0,
