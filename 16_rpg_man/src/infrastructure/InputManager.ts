@@ -16,9 +16,16 @@ export type TInput = {
     shiftKey: boolean,
 
     onKeyDown(code: KeyboardEvent['code'], cb: () => void): void,
+    onKeyDown(cb: (e: KeyboardEvent) => void): void,
+
     unsubscribeKeyDown(code: KeyboardEvent['code'], cb?: () => void): void,
+    unsubscribeKeyDown(cb: () => void): void,
+
     onKeyUp(code: KeyboardEvent['code'], cb: () => void): void,
+    onKeyUp(cb: (e: KeyboardEvent) => void): void,
+
     unsubscribeKeyUp(code: KeyboardEvent['code'], cb?: () => void): void,
+    unsubscribeKeyUp(cb: () => void): void,
 }
 
 // TODO add mouse
@@ -44,6 +51,11 @@ export class InputManager implements TInput {
 
     protected _subscriptionDictDown: { [code: string]: (() => void)[] } = {}
     protected _subscriptionDictUp: { [code: string]: (() => void)[] } = {}
+
+    protected _generalSubscriptionListDict: { up: ((e: KeyboardEvent) => void)[], down: ((e: KeyboardEvent) => void)[] } = {
+        down: [],
+        up: [],
+    }
 
     public start() {
         if (this._started) return
@@ -96,8 +108,8 @@ export class InputManager implements TInput {
                 this._axisCurrVerticalMove = this._axisTable.vie
                 break
         }
-
-        ; (this._subscriptionDictDown[e.code] || []).forEach(cb => cb())
+        this._generalSubscriptionListDict.down.forEach(cb => cb(e))
+            ; (this._subscriptionDictDown[e.code] || []).forEach(cb => cb())
     }
 
     protected _keyUpListener = (e: KeyboardEvent) => {
@@ -141,8 +153,8 @@ export class InputManager implements TInput {
                 }
                 break
         }
-
-        ; (this._subscriptionDictUp[e.code] || []).forEach(cb => cb())
+        this._generalSubscriptionListDict.up.forEach(cb => cb(e))
+            ; (this._subscriptionDictUp[e.code] || []).forEach(cb => cb())
     }
 
     axisSensitivity = 1 / 10
@@ -191,23 +203,56 @@ export class InputManager implements TInput {
         this.vertical = this._axisCurrVerticalMove(dt)
     }
 
-    public onKeyDown(code: KeyboardEvent['code'], cb: () => void): void {
-        this._subscriptionDictDown[code] ??= []
-        this._subscriptionDictDown[code].push(cb)
+    public onKeyDown(code: KeyboardEvent['code'], cb: () => void): void
+    public onKeyDown(cb: (e: KeyboardEvent) => void): void
+    public onKeyDown(...args: any[]): void {
+        if (args.length > 1) {
+            const code: string = args[0]
+            const cb = args[1]
+            this._subscriptionDictDown[code] ??= []
+            this._subscriptionDictDown[code].push(cb)
+            return
+        }
+        this._generalSubscriptionListDict.down.push(args[0])
     }
 
-    public unsubscribeKeyDown(code: KeyboardEvent['code'], cb?: () => void): void {
-        if (!this._subscriptionDictDown[code]) return
-        this._subscriptionDictDown[code] = this._subscriptionDictDown[code].filter(listener => listener !== cb)
+    public unsubscribeKeyDown(code: KeyboardEvent['code'], cb?: () => void): void
+    public unsubscribeKeyDown(cb: () => void): void
+    public unsubscribeKeyDown(...args: any[]): void {
+        if (args.length > 1) {
+            const code: string = args[0]
+            const cb = args[1]
+            if (!this._subscriptionDictDown[code]) return
+            this._subscriptionDictDown[code] = this._subscriptionDictDown[code].filter(listener => listener !== cb)
+            return
+        }
+        this._generalSubscriptionListDict.down = this._generalSubscriptionListDict.down.filter(cb => cb != args[0])
     }
 
-    public onKeyUp(code: KeyboardEvent['code'], cb: () => void): void {
-        this._subscriptionDictUp[code] ??= []
-        this._subscriptionDictUp[code].push(cb)
+    public onKeyUp(code: KeyboardEvent['code'], cb: () => void): void
+    public onKeyUp(cb: (e: KeyboardEvent) => void): void
+    public onKeyUp(...args: any[]): void {
+        if (args.length > 1) {
+            const code: string = args[0]
+            const cb = args[1]
+            this._subscriptionDictUp[code] ??= []
+            this._subscriptionDictUp[code].push(cb)
+            return
+        }
+
+        this._generalSubscriptionListDict.up.push(args[0])
     }
 
-    public unsubscribeKeyUp(code: KeyboardEvent['code'], cb?: () => void): void {
-        if (!this._subscriptionDictUp[code]) return
-        this._subscriptionDictUp[code] = this._subscriptionDictUp[code].filter(listener => listener !== cb)
+    public unsubscribeKeyUp(code: KeyboardEvent['code'], cb?: () => void): void
+    public unsubscribeKeyUp(cb: () => void): void
+    public unsubscribeKeyUp(...args: any[]): void {
+        if (args.length > 1) {
+            const code: string = args[0]
+            const cb = args[1]
+            if (!this._subscriptionDictUp[code]) return
+            this._subscriptionDictUp[code] = this._subscriptionDictUp[code].filter(listener => listener !== cb)
+        }
+        
+        this._generalSubscriptionListDict.down = this._generalSubscriptionListDict.up.filter(cb => cb != args[0])
     }
 }
