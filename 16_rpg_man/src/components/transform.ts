@@ -21,13 +21,6 @@ export interface ITransform {
 export const transform: TComponent = {
     [COMPONENT_NAME_SYMBOL]: 'transform',
 
-    ['$transform.position.x']: 0,
-    ['$transform.position.y']: 0,
-    ['$transform.size.w']: 1,
-    ['$transform.size.h']: 1,
-    ['$transform.anchor.x']: 0,
-    ['$transform.anchor.y']: 0,
-
     get position() {
         return new Vector2(this['$transform.position.x'], this['$transform.position.y'])
     },

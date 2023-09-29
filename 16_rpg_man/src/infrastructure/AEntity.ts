@@ -44,8 +44,8 @@ export abstract class AEntity implements IEntity {
         })
     }
 
-    public load(scene: AScene): Promise<void> {
-        return Promise.resolve(Promise.all(this.resourceList.map(r => r.load(scene)))).then()
+    public async load(scene: AScene): Promise<void> {
+        await Promise.all(this.resourceList.map(r => r.load(scene)))
     }
 
     public init(scene: AScene): void | Promise<void> {
