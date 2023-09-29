@@ -32,7 +32,7 @@ export class Engine {
         this._input = input
         this._currentScene = scene
 
-        this._input.onKeyPress('KeyG', () => {
+        this._input.onKeyDown('KeyG', () => {
             this.isDebugOn = !this.isDebugOn
         })
         this._input.start()
@@ -43,8 +43,8 @@ export class Engine {
         requestAnimationFrame(time => this._gameLoop(time))
     }
 
-    public changeScene() {
-        // TODO
+    public changeScene(scene: AScene) {
+        this._currentScene = scene
     }
 
     protected _gameLoop(time: number) {

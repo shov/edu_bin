@@ -83,10 +83,19 @@ export class Player extends AEntity {
         nextFrameOffset: new Vector2(64, 0),
         length: 4,
       },
+      {
+        name: 'hit_r',
+        frameSize: new Size2(64, 64),
+        frameDuration: 400, //ms
+        firstFrameOffset: new Vector2(64, 0).mul(24 + 1),
+        nextFrameOffset: new Vector2(64, 0),
+        length: 1,
+      },
     ])
     this.sprite.animation.play('idle_d')
   }
 
+  walk: number = 0
   direction: EPlDir = EPlDir.DOWN
   speed: number = 1
   indleAnimMap = {
@@ -95,30 +104,66 @@ export class Player extends AEntity {
     [EPlDir.UP]: 'idle_u',
     [EPlDir.LEFT]: 'idle_l',
   }
+  walkAnimMap = {
+    [EPlDir.DOWN]: 'walk_d',
+    [EPlDir.RIGHT]: 'walk_r',
+    [EPlDir.UP]: 'walk_u',
+    [EPlDir.LEFT]: 'walk_l',
+  }
+  wlakMoveMap = {
+    [EPlDir.DOWN]: Vector2.down(),
+    [EPlDir.RIGHT]: Vector2.right(),
+    [EPlDir.UP]: Vector2.up(),
+    [EPlDir.LEFT]: Vector2.left(),
+  }
+  isHit: boolean = false
+
+  subscribedOnInput: boolean = false
   public update(dt: number, input: TInput): void {
-    let move: IVector2 | null = null
-    if (input.down) {
-      this.direction = EPlDir.DOWN
-      move = Vector2.down().mul(dt).mul(this.speed)
-      this.sprite.animation.play('walk_d')
-    } else if (input.right) {
-      this.direction = EPlDir.RIGHT
-      move = Vector2.right().mul(dt).mul(this.speed)
-      this.sprite.animation.play('walk_r')
-    } else if (input.up) {
-      this.direction = EPlDir.UP
-      move = Vector2.up().mul(dt).mul(this.speed)
-      this.sprite.animation.play('walk_u')
-    } else if (input.left) {
-      this.direction = EPlDir.LEFT
-      move = Vector2.left().mul(dt).mul(this.speed)
-      this.sprite.animation.play('walk_l')
+    if (!this.subscribedOnInput) {
+      input.onKeyDown('KeyW', () => { this.direction = EPlDir.UP; this.walk ^= 8 })
+      input.onKeyUp('KeyW', () => { this.walk ^= 8 })
+      input.onKeyDown('KeyD', () => { this.direction = EPlDir.RIGHT; this.walk ^= 4 })
+      input.onKeyUp('KeyD', () => { this.walk ^= 4 })
+      input.onKeyDown('KeyS', () => { this.direction = EPlDir.DOWN; this.walk ^= 2 })
+      input.onKeyUp('KeyS', () => { this.walk ^= 2 })
+      input.onKeyDown('KeyA', () => { this.direction = EPlDir.LEFT; this.walk ^= 1 })
+      input.onKeyUp('KeyA', () => { this.walk ^= 1 })
+      input.onKeyDown('Space', () => {
+        if(this.isHit) {
+          return
+        }
+        this.isHit = true
+        this.sprite.animation.play('hit_r')
+        
+        setTimeout(() => {
+          this.sprite.animation.play(this.indleAnimMap[this.direction])
+        }, 300) // idle
+        setTimeout(() => {
+          this.isHit = false
+        }, 450) // CD
+      })
+      input.onKeyUp('Space', () => {})
+      this.subscribedOnInput = true
+    }
+
+    // Cannot move or idle while hit
+    if(this.isHit) {
+      return
+    }
+
+    if(this.walk < 0 || false === (input.up || input.down || input.right || input.left)) { // for anykey guys
+      this.walk = 0
+    }
+
+    if (this.walk > 0) {
+      this.sprite.animation.play(this.walkAnimMap[this.direction])
     } else {
       this.sprite.animation.play(this.indleAnimMap[this.direction])
     }
 
-    if (move) {
-      this.position = this.position.add(move)
+    if (this.walk) {
+      this.position = this.position.add(this.wlakMoveMap[this.direction].mul(dt).mul(this.speed))
     }
   }
   public render(canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D, dt: number, delta: number, fps: number): void {

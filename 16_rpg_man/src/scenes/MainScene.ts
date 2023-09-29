@@ -2,7 +2,7 @@ import { Player } from '../entities/Player'
 import { AScene } from '../infrastructure/AScene'
 import { Engine } from '../infrastructure/Engine'
 
-export class DefaultScene extends AScene {
+export class MainScene extends AScene {
 
     public async init(engine: Engine, canvas: HTMLCanvasElement) {
 

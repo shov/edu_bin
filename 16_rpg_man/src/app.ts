@@ -1,6 +1,6 @@
-import {DefaultScene} from './scenes/DefaultScene'
 import {Engine} from './infrastructure/Engine'
 import {InputManager} from './infrastructure/InputManager'
+import { LoadingScreen } from './scenes/LoadingScreen'
 
 window.addEventListener('load', () => {
 
@@ -12,11 +12,11 @@ window.addEventListener('load', () => {
     document.getElementById('root')!.appendChild(canvas)
 
     const inputManager = new InputManager()
-    const defaultScene = new DefaultScene()
+    const loadingScreen = new LoadingScreen()
     const engine = new Engine()
     
     Promise.resolve(
-        engine.start(canvas, canvas.getContext('2d')!, inputManager, defaultScene)
+        engine.start(canvas, canvas.getContext('2d')!, inputManager, loadingScreen)
     ).catch(e => (
         console.error(e)
     ))
