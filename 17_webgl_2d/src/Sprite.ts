@@ -102,27 +102,6 @@ export class Sprite implements IGameEntity {
     gl.bindBuffer(gl.ARRAY_BUFFER, this.texBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, Sprite.createRectArray(0, 0, this.uv.x, this.uv.y), gl.STATIC_DRAW);
 
-    this.aPosLoc = gl.getAttribLocation(this.material.program, 'a_position');
-    this.aTexCoordLoc = gl.getAttribLocation(this.material.program, 'a_texCoord');
-    const uImageLoc = gl.getUniformLocation(this.material.program, 'u_image');
-    if (!uImageLoc) {
-      throw new Error('Cannot get uniform location uImageLoc!');
-    }
-    this.uImageLoc = uImageLoc;
-
-    const uWorldLoc = gl.getUniformLocation(this.material.program, 'u_world');
-    if (!uWorldLoc) {
-      throw new Error('Cannot get uniform location uWorldLoc!');
-    }
-    this.uWorldLoc = uWorldLoc;
-
-    const uFrameOffsetLoc = gl.getUniformLocation(this.material.program, 'u_frame_offset');
-    if (!uFrameOffsetLoc) {
-      throw new Error('Cannot get uniform location uFrameOffsetLoc!');
-    }
-
-    this.uFrameOffsetLoc = uFrameOffsetLoc;
-
     gl.useProgram(null);
     this.isLoaded = true;
   }
@@ -144,21 +123,11 @@ export class Sprite implements IGameEntity {
     const gl = this.gl;
     gl.useProgram(this.material.program);
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture);
-    gl.uniform1i(this.uImageLoc, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.texBuffer);
-    gl.enableVertexAttribArray(this.aTexCoordLoc);
-    gl.vertexAttribPointer(this.aTexCoordLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.geoBuffer);
-    gl.enableVertexAttribArray(this.aPosLoc);
-    gl.vertexAttribPointer(this.aPosLoc, 2, gl.FLOAT, false, 0, 0);
-
-    gl.uniformMatrix3fv(this.uWorldLoc, false, this.game.worldMatrix.floatData);
-
-    gl.uniform2f(this.uFrameOffsetLoc, this.frameOffset.x, this.frameOffset.y);
+    this.material.setParameterBindTexture('u_image', this.texture, 0);
+    this.material.setParameterBindBuffer('a_texCoord', this.texBuffer);
+    this.material.setParameterBindBuffer('a_position', this.geoBuffer);
+    this.material.setParameter('u_world', this.game.worldMatrix.floatData);
+    this.material.setParameter('u_frame_offset', this.frameOffset.x, this.frameOffset.y);
 
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 6);
 
