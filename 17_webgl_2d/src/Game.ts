@@ -1,5 +1,7 @@
 import { IGameEntity } from './IGameEntity';
+import { IGameScene } from './IGameScene';
 import { IUpdatable } from './IUpdatable';
+import { ResourceRegistry } from './ResourceRegistry';
 import { Sprite } from './Sprite';
 import { TransformationMatrix } from './TransformationMatrix';
 
@@ -8,11 +10,14 @@ export class Game implements IUpdatable {
     return this.worldSpaceMatrix;
   }
 
-  protected canvas: HTMLCanvasElement;
-  protected gl: WebGL2RenderingContext;
+  public gl: WebGL2RenderingContext;
+  public canvas: HTMLCanvasElement;
+
   protected worldSpaceMatrix: TransformationMatrix = TransformationMatrix.identity();
 
-  protected entityList: IGameEntity[] = [];
+  protected sceneList: IGameScene[] = [];
+
+  public readonly resourceRegistry: ResourceRegistry = new ResourceRegistry();
 
   constructor() {
     this.canvas = document.createElement('canvas');
@@ -31,11 +36,14 @@ export class Game implements IUpdatable {
     document.body.appendChild(this.canvas);
   }
 
-  public async init() {
-    let vs = await fetch('shaders/vertex.glsl').then(r => r.text());
-    let fs = await fetch('shaders/fragment.glsl').then(r => r.text());
+  public addScene(scene: IGameScene) {
+    this.sceneList.push(scene);
+  }
 
-    this.entityList.push(new Sprite(this.gl, this, 'assets/turtle.png', vs, fs, { w: 64, h: 64 }));
+  public async init() {
+    for (const scene of this.sceneList) {
+      await scene.init();
+    }
   }
 
   public resize(width: number, height: number) {
@@ -57,8 +65,8 @@ export class Game implements IUpdatable {
     this.gl.enable(this.gl.BLEND);
     this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
 
-    this.entityList.forEach(e => e.update(dt));
-    this.entityList.forEach(e => e.render());
+    this.sceneList.forEach(scene => scene.update(dt));
+    this.sceneList.forEach(scene => scene.render());
 
     this.gl.flush();
   }

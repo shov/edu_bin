@@ -1,13 +1,17 @@
 import { Game } from "./Game"
+import { DefaultScene } from "./GameScenes/DefaultScene";
 import { loop } from "./loop";
 
 window.addEventListener('load', () => {
+    const game = new Game();
+
+    game.addScene(new DefaultScene(game));
+    
     // @ts-ignore
-    window.game = new Game();
-    // @ts-ignore
-    window.game.init().then(() => {
-        // @ts-ignore
-        window.game.resize(window.innerWidth, window.innerHeight);
+    window.game = game;
+
+    game.init().then(() => {
+        game.resize(window.innerWidth, window.innerHeight);
         loop();
     });
 })

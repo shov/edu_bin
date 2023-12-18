@@ -17,6 +17,10 @@ export class Matrix {
     this.data.fill(fill);
   }
 
+  public static identity(): Matrix {
+    return new Matrix(0, 3, 3);
+  }
+
   public clone() {
     const m = new Matrix(0, this.width, this.height);
     m.data = new Float32Array(this.data);
@@ -45,6 +49,18 @@ export class Matrix {
           sum += this.get(k, i) * m.get(j, k);
         }
         result.set(j, i, sum);
+      }
+    }
+
+    return result;
+  }
+
+  public transpose(): Matrix {
+    const result = new Matrix(0, this.height, this.width);
+
+    for (let i = 0; i < this.height; i++) {
+      for (let j = 0; j < this.width; j++) {
+        result.set(i, j, this.get(j, i));
       }
     }
 

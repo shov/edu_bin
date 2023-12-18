@@ -6,9 +6,22 @@ import { Vector2 } from "./Vector2";
 export type TSpriteOptions = {
   w?: number;
   h?: number;
+  uv?: Vector2;
 }
 
 export class Sprite implements IGameEntity {
+
+  public setAnimation(cb: (this: Sprite) => void) {
+    if (/^bound\s/.test(cb.name)) {
+      throw new Error('Animation callback must be unbound function!');
+    }
+    if (/^[^{]+=>(\s+)?\{/.test(cb.toString())) {
+      throw new Error('Animation callback must be non-arrow function!');
+    }
+
+    this.animationCb = cb;
+  }
+
   protected isLoaded: boolean = false;
   protected material: Material;
 
@@ -29,6 +42,8 @@ export class Sprite implements IGameEntity {
 
   protected size: Vector2 = new Vector2(1, 1);
 
+  protected animationCb: ((this: Sprite) => void) | null = null;
+
   constructor(
     protected readonly gl: WebGL2RenderingContext,
     protected readonly game: Game,
@@ -46,8 +61,20 @@ export class Sprite implements IGameEntity {
       this.setup();
     };
 
-    this.size.x = options.w || 1;
-    this.size.y = options.h || 1;
+    this.size.x = 'number' === typeof options.w
+      ? options.w :
+      1;
+
+    this.size.y = 'number' === typeof options.h
+      ? options.h
+      : 1;
+
+    this.uv.x = 'number' === typeof options.uv?.x
+      ? options.uv.x
+      : 1;
+    this.uv.y = 'number' === typeof options.uv?.y
+      ? options.uv.y
+      : 1;
   }
 
   protected static createRectArray(x: number = 0, y: number = 0, w: number = 1, h: number = 1) {
@@ -112,7 +139,9 @@ export class Sprite implements IGameEntity {
     }
 
     // Animation
-    this.frameOffset.x = this.uv.x * (Date.now() % 800 / 200 | 0);
+    if (this.animationCb) {
+      this.animationCb.call(this);
+    }
   }
 
   public render() {
