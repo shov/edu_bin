@@ -17,4 +17,5 @@ export type TMonth = {
   month: number
   weekList: TWeek[]
   isCurrentMonth: boolean
+  year: number
 }

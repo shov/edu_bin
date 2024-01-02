@@ -1,6 +1,6 @@
 import React from "react"
 import { TWeek } from "../contracts"
-import { View, StyleSheet } from "react-native"
+import { View, StyleSheet, Text } from "react-native"
 import { Day } from "./Day"
 
 // Week react component
@@ -14,7 +14,7 @@ export const Week: React.FC<{ week: TWeek }> = ({ week }) => {
     .map((v, i) => v || { key: `empty-${i}`, isEmpty: true })
 
   return (
-    <View key={week.key} style={styles.weekRow}>
+    <View style={styles.weekRow}>
       {dayList.map((day) => (
         <Day key={day.key} day={day} isEmpty={day.isEmpty} />
       ))}

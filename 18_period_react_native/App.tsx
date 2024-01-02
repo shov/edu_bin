@@ -43,6 +43,7 @@ function createMonthList(dayList: TDay[]) {
       acc[key] ??= {
         key: key,
         month,
+        year: curr.originDate.getFullYear(),
         weekList: [],
         isCurrentMonth:
           month === new Date().getMonth() &&
@@ -74,15 +75,21 @@ export default function App() {
   const [monthList, setMonthList] = useState<TMonth[]>([])
 
   useEffect(() => {
-    setYear(getCurrYear())
-    setDayList(buildDayListForToday())
+    const currYear = getCurrYear()
+    const dayList = buildDayListForToday()
+
+    setYear(currYear)
+    setDayList(dayList)
+    
     setMonthList(createMonthList(dayList))
   }, [])
 
   return (
     <SafeAreaView style={styles.container}>
       <YearTitle year={year} />
-      <Calendar year={year} monthList={monthList} />
+      <Calendar year={year} monthList={monthList} setYear={(year: number) => {
+        setYear(year)
+      }}/>
     </SafeAreaView>
   )
 }

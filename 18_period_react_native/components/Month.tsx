@@ -27,7 +27,7 @@ export const Month: React.FC<{ month: TMonth; year: number }> = ({
     >
       <Text style={styles.monthName}>{monthName}</Text>
       {month.weekList.map((week) => (
-        <Week week={week} />
+        <Week key={week.key} week={week} />
       ))}
     </View>
   )
