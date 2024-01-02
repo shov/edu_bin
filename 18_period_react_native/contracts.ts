@@ -4,6 +4,7 @@ export type TDay = {
   date: number
   day: number
   month: number
+  isRed: boolean
 }
 
 export type TWeek = {

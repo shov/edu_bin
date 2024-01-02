@@ -4,9 +4,10 @@ import { View, Text, StyleSheet } from 'react-native'
 import { Week } from './Week'
 
 // Month react component
-export const Month: React.FC<{ month: TMonth; year: number }> = ({
+export const Month: React.FC<{ month: TMonth; year: number, isLast?: boolean }> = ({
   month,
   year,
+  isLast,
 }) => {
   // create new date object of this month
   const date = new Date(year, month.month, 1)
@@ -29,6 +30,7 @@ export const Month: React.FC<{ month: TMonth; year: number }> = ({
       {month.weekList.map((week) => (
         <Week key={week.key} week={week} />
       ))}
+      {isLast && <View style={{ height: 50 }} />}
     </View>
   )
 }
