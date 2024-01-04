@@ -3,7 +3,7 @@ import { YearTitle } from './components/YearTitle'
 import { Calendar } from './components/Calendar'
 import { TDay, TMonth } from './contracts'
 import { useContext, useEffect, useState } from 'react'
-import { DayContext, DayProvider } from './DayContext'
+import { MonthProvider } from './MonthContext'
 import { createMonthList, getCurrYear } from './dayUtil'
 
 export default function App() {
@@ -15,7 +15,7 @@ export default function App() {
   }, [])
   
   return (
-    <DayProvider>
+    <MonthProvider>
       <SafeAreaView style={styles.container}>
         <YearTitle year={year} />
         <Calendar
@@ -25,7 +25,7 @@ export default function App() {
           }}
         />
       </SafeAreaView>
-    </DayProvider>
+    </MonthProvider>
   )
 }
 

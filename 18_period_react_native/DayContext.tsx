@@ -1,22 +1,21 @@
 import { createContext } from "react"
 import { useReducer } from "react";
-import { buildDayListForToday } from "./dayUtil";
+import { buildDayListForToday, createDayListForMonth } from "./dayUtil";
 import { TDay } from "./contracts";
 
 export const DayContext = createContext<TDay[]>([])
 export const DayDispatchContext = createContext<React.Dispatch<any>>(null as unknown as React.Dispatch<any>)
 
 export enum EDayActionType {
+  FILL_BY_MONTH = 'FILL_BY_MONTH',
   TOGGLE_DAY = 'TOGGLE_DAY',
 }
 
-const initialDayList: TDay[] = buildDayListForToday();
+const initialDayList: TDay[] = [];
 
 export const DayProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
-  console.log('init dayList', initialDayList.length);
   const [dayList, dayListDispatch] = useReducer(dayListReducer, initialDayList);
-  console.log('dayList in context', dayList.length);
 
   return (
     <DayContext.Provider value={dayList}>
@@ -30,6 +29,8 @@ export const DayProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 const dayListReducer = (dayList: TDay[], action: any) => {
   switch (action.type) {
+    case EDayActionType.FILL_BY_MONTH:
+      return createDayListForMonth(action.month);
     case EDayActionType.TOGGLE_DAY:
       return dayList.map((day) => {
         if (day.key === action.key) {

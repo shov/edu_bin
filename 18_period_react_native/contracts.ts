@@ -16,7 +16,6 @@ export type TWeek = {
 export type TMonth = {
   key: string
   month: number
-  weekList: TWeek[]
   isCurrentMonth: boolean
   year: number
 }

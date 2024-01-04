@@ -3,8 +3,8 @@ import { useEffect, useRef } from 'react'
 import { TMonth } from '../contracts'
 import { FlatList, View, StyleSheet } from 'react-native'
 import { Month } from './Month'
-import { DayContext } from '../DayContext'
-import { createMonthList } from '../dayUtil'
+import { DayProvider } from '../DayContext'
+import { MonthContext } from '../MonthContext'
 
 // Calendar react component
 export const Calendar: React.FC<{
@@ -16,17 +16,7 @@ export const Calendar: React.FC<{
   const [layoutHandlerCb, setLayoutHandlerCb] = useState<Function>(() => {})
   const flatListRef = useRef<FlatList>(null)
 
-  const [monthList, setMonthList] = useState<TMonth[]>([])
-  const dayList = useContext(DayContext);
-
-  useEffect(() => {
-    setMonthList(createMonthList(dayList))
-  }, [])
-
-  useEffect(() => {
-    setMonthList(createMonthList(dayList))
-  }, [dayList])
-
+  const monthList = useContext(MonthContext)
 
   const onViewableItemsChanged = ({
     viewableItems,
@@ -44,10 +34,6 @@ export const Calendar: React.FC<{
   })
 
   const onViewableItemsChangedRef = useRef(onViewableItemsChanged)
-
-  useEffect(() => {
-    
-  }, [])
 
   useEffect(() => {
     const currentIndex = monthList.findIndex((month) => month.isCurrentMonth)
@@ -77,11 +63,13 @@ export const Calendar: React.FC<{
         ref={flatListRef}
         data={monthList}
         renderItem={({ item, index }) => (
-          <Month
-            month={item}
-            year={year}
-            isLast={index === monthList.length - 1}
-          />
+          <DayProvider>
+            <Month
+              month={item}
+              year={year}
+              isLast={index === monthList.length - 1}
+            />
+          </DayProvider>
         )}
         onScrollToIndexFailed={(info: {
           index: number
