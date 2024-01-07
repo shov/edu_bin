@@ -5,25 +5,28 @@ import { TDay, TMonth } from './contracts'
 import { useContext, useEffect, useState } from 'react'
 import { MonthProvider } from './MonthContext'
 import { createMonthList, getCurrYear } from './dayUtil'
+import { CalendarProvider } from './CalendarContext'
 
 export default function App() {
   const [year, setYear] = useState<number>(0)
-  
+
   useEffect(() => {
     const currYear = getCurrYear()
     setYear(currYear)
   }, [])
-  
+
   return (
     <MonthProvider>
       <SafeAreaView style={styles.container}>
         <YearTitle year={year} />
-        <Calendar
-          year={year}
-          setYear={(year: number) => {
-            setYear(year)
-          }}
-        />
+        <CalendarProvider>
+          <Calendar
+            year={year}
+            setYear={(year: number) => {
+              setYear(year)
+            }}
+          />
+        </CalendarProvider>
       </SafeAreaView>
     </MonthProvider>
   )
