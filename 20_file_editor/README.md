@@ -1,3 +1,6 @@
+# Diagrams
+https://app.diagrams.net/#G1h1sotWDoSO4otroIv9WLl55tN9PtmDHI
+
 # Contracts
 
 ## Auth API
