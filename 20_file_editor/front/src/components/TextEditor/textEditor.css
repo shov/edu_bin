@@ -1,0 +1,14 @@
+.text-editor {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  min-width: 500px;
+
+  width: 100%;
+  height: 100vh;
+
+  background-color: #081824ba;
+  color: #fff;
+}
