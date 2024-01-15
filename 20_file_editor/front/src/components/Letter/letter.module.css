@@ -3,7 +3,7 @@
   padding: 0.25px;
 }
 
-.cursoredLetter::before {
+/* .cursoredLetter::before {
   content: "|";
   font-size: 1.5rem;
   position: absolute;
@@ -11,15 +11,23 @@
   line-height: 100%;
   color: rgba(200, 200, 200, 0.8);
   animation: blink 1s infinite linear;
-}
+} */
 
 .newLine {
-  /* the height should be as for letter */
-  display: block;
-  width: 1px;
-  height: 1.5rem;
+   
 }
 
+.cursor {
+  position: absolute;
+  font-size: 1.5rem;
+  line-height: 100%;
+  left: -1.25px;
+  top: 0;
+  width: 0;
+  height: 0;
+  color: rgba(200, 200, 200, 0.8);
+  animation: blink 1s infinite linear;
+}
 
 @keyframes blink {
   0% {

@@ -1,5 +1,5 @@
 import { Fragment } from 'react'
-import { LAST_LETTER, NEW_LINE, TLetter } from './contract'
+import { LAST_LETTER, NEW_LINE, TLetter } from 'infrastructure_common'
 import classDict from './letter.module.css'
 
 // pass letter as a children. React.FC
@@ -10,10 +10,11 @@ export const Letter: React.FC<{
   const display = toDisplay(children.value)
   const isLast = children.value === LAST_LETTER
   const isNewLine = children.value === NEW_LINE
+  const isCursor = children.isCursor()
   return (
     <div
       className={
-        children.isCursor() ? classDict.cursoredLetter : classDict.letter 
+        isCursor ? classDict.cursoredLetter : classDict.letter 
         + (isNewLine ? ' ' + classDict.newLine : '')
       }
       onClick={(e) => {
@@ -21,14 +22,15 @@ export const Letter: React.FC<{
         onClick(children)
       }}
     >
-      {display}{isLast ? '$' : ''}
+      {isCursor ? <span className={classDict.cursor}>|</span> : null}
+      {display}
     </div>
   )
 }
 
 function toDisplay(value: string | symbol): string | JSX.Element {
   if ('symbol' === typeof value) {
-    return ''
+    return '¶'
   }
 
   if (' ' === value) {

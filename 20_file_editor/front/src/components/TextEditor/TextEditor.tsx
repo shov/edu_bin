@@ -1,15 +1,56 @@
-import { useEffect, useReducer, useRef } from 'react'
+import { useContext, useEffect } from 'react'
 import classDict from './textEditor.module.css'
 import { Letter } from '../Letter/Letter'
-import { ERelativePosition, LetterLinkedList } from './LetterLinkedList'
-import { NEW_LINE, TLetter } from '../Letter/contract'
+import { ERelativePosition, LetterLinkedList, TLetterLinkedListAction } from 'infrastructure_common'
+import { NEW_LINE, TLetter } from 'infrastructure_common'
+import {
+  LetterLinkedListContext,
+  LetterLinkedListDispatchContext,
+} from '../../contexts/TextContext'
 
-const textList = new LetterLinkedList()
+function keyDownHandler(
+  this: { textDispatch: React.Dispatch<TLetterLinkedListAction> },
+  e: KeyboardEvent
+) {
+  e.preventDefault()
+  const textDispatch = this.textDispatch
+
+  if (e.key === 'ArrowLeft') {
+    textDispatch({
+      type: LetterLinkedList.ACTION.MOVE_CURSOR_HORIZONTAL,
+      value: ERelativePosition.PREV,
+    })
+  } else if (e.key === 'ArrowRight') {
+    textDispatch({
+      type: LetterLinkedList.ACTION.MOVE_CURSOR_HORIZONTAL,
+      value: ERelativePosition.NEXT,
+    })
+  } else if (e.key === 'Backspace') {
+    textDispatch({
+      type: LetterLinkedList.ACTION.DELETE,
+      value: ERelativePosition.PREV,
+    })
+  } else if (e.key === 'Delete') {
+    textDispatch({
+      type: LetterLinkedList.ACTION.DELETE,
+      value: ERelativePosition.CURR,
+    })
+  } else if (e.key === 'Enter') {
+    textDispatch({
+      type: LetterLinkedList.ACTION.INSERT,
+      value: NEW_LINE,
+    })
+  } else if (e.key.length === 1) {
+    textDispatch({
+      type: LetterLinkedList.ACTION.INSERT,
+      value: e.key,
+    })
+  }
+}
 
 export const TextEditor: React.FC = () => {
-  const [textObj, textDispatch] = useReducer(textList.reducer.bind(textList), {
-    state: textList,
-  })
+  const textObj = useContext(LetterLinkedListContext)
+  const textDispatch = useContext(LetterLinkedListDispatchContext)
 
   function setCursor(id: string) {
     textDispatch({
@@ -18,63 +59,23 @@ export const TextEditor: React.FC = () => {
     })
   }
 
-  function keyDownHandler(e: KeyboardEvent) {
-    e.preventDefault()
-    console.log(e.key)
-    if (e.key === 'ArrowLeft') {
-      textDispatch({
-        type: LetterLinkedList.ACTION.MOVE_CURSOR_HORIZONTAL,
-        value: ERelativePosition.PREV,
-      })
-    } else if (e.key === 'ArrowRight') {
-      textDispatch({
-        type: LetterLinkedList.ACTION.MOVE_CURSOR_HORIZONTAL,
-        value: ERelativePosition.NEXT,
-      })
-    } else if (e.key === 'Backspace') {
-      textDispatch({
-        type: LetterLinkedList.ACTION.DELETE,
-        value: ERelativePosition.PREV,
-      })
-    } else if (e.key === 'Delete') {
-      textDispatch({
-        type: LetterLinkedList.ACTION.DELETE,
-        value: ERelativePosition.CURR,
-      })
-    } else if (e.key === 'Enter') {
-      textDispatch({
-        type: LetterLinkedList.ACTION.INSERT,
-        value: NEW_LINE,
-      })
-    } else if (e.key.length === 1) {
-      textDispatch({
-        type: LetterLinkedList.ACTION.INSERT,
-        value: e.key,
-      })
-    }
-  }
-
   useEffect(() => {
-    textDispatch({
-      type: LetterLinkedList.ACTION.INIT,
-      value: 'Hello world!',
-    })
+    const kdHandler = keyDownHandler.bind({ textDispatch })
 
     // set keydown handler on the window
-    window.addEventListener('keydown', keyDownHandler)
+    window.addEventListener('keydown', kdHandler)
 
     return () => {
-      window.removeEventListener('keydown', keyDownHandler)
+      window.removeEventListener('keydown', kdHandler)
     }
-  }, [])
+  }, [textDispatch])
 
   const paragraphed = [...textObj.state].reduce<TLetter[][]>(
     (acc, letter) => {
+      acc[acc.length - 1].push(letter)
       if (letter.value === NEW_LINE) {
-        acc.push([letter])
-      } else {
-        acc[acc.length - 1].push(letter)
-      }
+        acc.push([])
+      } 
       return acc
     },
     [[]]

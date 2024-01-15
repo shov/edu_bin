@@ -1,0 +1,13 @@
+{
+  "name": "infrastructure_common",
+  "scripts": {
+    "build": "npx tsc",
+    "watch": "npx tsc -w"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "dependencies": {
+    "@types/node": "^20.11.2",
+    "typescript": "^5.3.3"
+  }
+}

@@ -1,5 +1,4 @@
-import { TLetter } from "../Letter/contract";
-import * as uuid from 'uuid';
+import { NEW_LINE, TLetter } from "./TLetter";
 
 export type TLetterLinkedListAction = {
   type: typeof LetterLinkedList['ACTION'][keyof typeof LetterLinkedList['ACTION']];
@@ -68,8 +67,9 @@ export class LetterLinkedList implements Iterable<TLetter> {
   protected _length: number;
   protected _cursor: TCursor;
   protected _indexIdMap: Map<string, TLetter> = new Map<string, TLetter>();
+  protected _otherUserCursorList: TLetter[] = [];
 
-  constructor() {
+  constructor(protected idGen: () => string) {
     const linkedListRef = this;
     const lastLetter = {
       id: LetterLinkedList.LAST_LETTER_ID,
@@ -110,37 +110,40 @@ export class LetterLinkedList implements Iterable<TLetter> {
     }
   }
 
-  public add(value: string): LetterLinkedList {
-    const linkedListRef = this;
-    const letter: TLetter = {
-      id: uuid.v4(),
-      value,
-      next: this._tail,
-      prev: this._tail === this._head ? void 0 : this._tail!.prev,
-      isCursor() { return this === linkedListRef._cursor.letter },
-    };
-
-    if (letter.prev) {
-      letter.prev.next = letter;
+  public fillInWithText(text: string): LetterLinkedList {
+    for (let i = 0; i < text.length; i++) {
+      this.add(text[i]);
     }
-    if (!letter.prev) {
-      this._head = letter;
-    }
-
-    letter.next!.prev = letter;
-
-    this._indexIdMap.set(letter.id, letter);
-
-    this._length++;
-
     return this;
   }
 
-  public insert(value: string): LetterLinkedList {
+  public fillWithList(letter: TLetter): LetterLinkedList {
+    this._head = letter;
+    this._length = 1;
+    this._indexIdMap.set(letter.id, letter);
+    let next: TLetter | undefined = letter;
+    while (next = letter.next) {
+      this._length++;
+      this._tail = letter;
+      this._indexIdMap.set(letter.id, letter);
+    }
+    return this;
+  }
+
+  public add(value: string | symbol): LetterLinkedList
+  public add(value: TLetter): LetterLinkedList
+  public add(value: string | symbol | TLetter): LetterLinkedList {
+    if ('string' === typeof value || 'symbol' === typeof value) {
+      return this.addValue(value);
+    }
+    throw new Error('Not implemented');
+  }
+
+  public insert(value: string | symbol): LetterLinkedList {
     const linkedListRef = this;
     const letter: TLetter = {
-      id: uuid.v4(),
-      value,
+      id: this.idGen(),
+      value: this.revalue(value),
       next: this._cursor.letter,
       prev: this._cursor.letter === this._head ? void 0 : this._cursor.letter.prev,
       isCursor() { return this === linkedListRef._cursor.letter },
@@ -195,6 +198,44 @@ export class LetterLinkedList implements Iterable<TLetter> {
     return this;
   }
 
+  public getCursor(): TCursor {
+    return this._cursor;
+  }
+
+  public set otherUserCursorList(otherUserCursorList: TLetter[]) {
+    this._otherUserCursorList = otherUserCursorList;
+  }
+
+  public get otherUserCursorList(): TLetter[] {
+    return this._otherUserCursorList;
+  }
+
+  protected addValue(value: string | symbol): LetterLinkedList {
+    const linkedListRef = this;
+    const letter: TLetter = {
+      id: this.idGen(),
+      value: this.revalue(value),
+      next: this._tail,
+      prev: this._tail === this._head ? void 0 : this._tail!.prev,
+      isCursor() { return this === linkedListRef._cursor.letter },
+    };
+
+    if (letter.prev) {
+      letter.prev.next = letter;
+    }
+    if (!letter.prev) {
+      this._head = letter;
+    }
+
+    letter.next!.prev = letter;
+
+    this._indexIdMap.set(letter.id, letter);
+
+    this._length++;
+
+    return this;
+  }
+
   protected init(value: string): LetterLinkedList {
     this.isInitiated = true;
     for (let i = 0; i < value.length; i++) {
@@ -202,5 +243,17 @@ export class LetterLinkedList implements Iterable<TLetter> {
     }
     this.setCursorById(this._head!.id);
     return this;
+  }
+
+  protected revalue(srcValue: string | symbol): string | symbol {
+    if( 'string' !== typeof srcValue) {
+      return srcValue;
+    }
+
+    if(srcValue === '\n') {
+      return NEW_LINE;
+    }
+
+    return srcValue;
   }
 }
