@@ -1,7 +1,11 @@
 import { useContext, useEffect } from 'react'
 import classDict from './textEditor.module.css'
 import { Letter } from '../Letter/Letter'
-import { ERelativePosition, LetterLinkedList, TLetterLinkedListAction } from 'infrastructure_common'
+import {
+  ERelativePosition,
+  LetterLinkedList,
+  TLetterLinkedListAction,
+} from 'infrastructure_common'
 import { NEW_LINE, TLetter } from 'infrastructure_common'
 import {
   LetterLinkedListContext,
@@ -75,7 +79,7 @@ export const TextEditor: React.FC = () => {
       acc[acc.length - 1].push(letter)
       if (letter.value === NEW_LINE) {
         acc.push([])
-      } 
+      }
       return acc
     },
     [[]]

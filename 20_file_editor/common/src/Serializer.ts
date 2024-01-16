@@ -12,7 +12,7 @@ export class Serializer {
     };
   }
 
-  static deserializeTextState(state: TTextState, letterLinkedList: LetterLinkedList): LetterLinkedList {
+  static deserializeTextState(state: TTextState): LetterLinkedList {
     const {letterList, cursorId, otherUserCursorList } = state;
     const index = new Map<string, TLetter>();
     const linkJobList: (() => void)[] = [];
@@ -36,7 +36,7 @@ export class Serializer {
     })
     linkJobList.forEach((linkJob) => linkJob())
 
-    letterLinkedList.fillWithList(index.get(letterList[0].id)!);
+    const letterLinkedList = LetterLinkedList.instantiateByList(index.get(letterList[0].id)!);
     letterLinkedList.setCursorById(cursorId);
     letterLinkedList.otherUserCursorList = otherUserCursorList.map(id => index.get(id)!); // nah one
 

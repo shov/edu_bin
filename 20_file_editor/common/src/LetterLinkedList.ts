@@ -1,4 +1,6 @@
+import { Serializer } from "./Serializer";
 import { NEW_LINE, TLetter } from "./TLetter";
+import { v4 as uuidv4 } from 'uuid';
 
 export type TLetterLinkedListAction = {
   type: typeof LetterLinkedList['ACTION'][keyof typeof LetterLinkedList['ACTION']];
@@ -21,10 +23,40 @@ export class LetterLinkedList implements Iterable<TLetter> {
     DELETE: 'DELETE',
     INSERT: 'INSERT',
     MOVE_CURSOR_HORIZONTAL: 'MOVE_CURSOR_HORIZONTAL',
-
+    FILL_WITH_STATE: 'FILL_WITH_STATE',
   } as const;
 
   static readonly LAST_LETTER_ID = 'last';
+
+  public static instantiateByList(letter: TLetter): LetterLinkedList {
+    const linkedList = new LetterLinkedList(uuidv4);
+    linkedList._head = letter;
+    linkedList._length = 1;
+    linkedList._indexIdMap.set(letter.id, letter);
+    let curr: TLetter | undefined = letter;
+    while (curr) {
+      linkedList._length++;
+      linkedList._tail = curr;
+      linkedList._indexIdMap.set(letter.id, curr);
+      curr = curr.next
+    };
+
+    // if for some reason the last letter is not the last letter, make it so
+    if (linkedList._tail!.id !== LetterLinkedList.LAST_LETTER_ID) {
+      const lastLetter: TLetter = {
+        id: LetterLinkedList.LAST_LETTER_ID,
+        value: Symbol('LAST_LETTER'),
+        next: void 0,
+        prev: linkedList._tail,
+        isCursor() { return this === linkedList._cursor.letter },
+      };
+      linkedList._tail!.next = lastLetter;
+      linkedList._tail = lastLetter;
+      linkedList._indexIdMap.set(lastLetter.id, lastLetter);
+      linkedList._length++;
+    }
+    return linkedList;
+  }
 
   protected isInitiated: boolean = false;
 
@@ -46,7 +78,7 @@ export class LetterLinkedList implements Iterable<TLetter> {
         }
         return { state: this.remove(toRemove) };
       }
-      case LetterLinkedList.ACTION.INSERT: 
+      case LetterLinkedList.ACTION.INSERT:
         return { state: this.insert(action.value) };
 
       case LetterLinkedList.ACTION.MOVE_CURSOR_HORIZONTAL: {
@@ -57,6 +89,8 @@ export class LetterLinkedList implements Iterable<TLetter> {
         }
         return { state: this.setCursorById(newPos.id) };
       }
+      case LetterLinkedList.ACTION.FILL_WITH_STATE:
+        return { state: Serializer.deserializeTextState(action.value, this) };
       default:
         return { state: this };
     }
@@ -117,19 +151,6 @@ export class LetterLinkedList implements Iterable<TLetter> {
     return this;
   }
 
-  public fillWithList(letter: TLetter): LetterLinkedList {
-    this._head = letter;
-    this._length = 1;
-    this._indexIdMap.set(letter.id, letter);
-    let next: TLetter | undefined = letter;
-    while (next = letter.next) {
-      this._length++;
-      this._tail = letter;
-      this._indexIdMap.set(letter.id, letter);
-    }
-    return this;
-  }
-
   public add(value: string | symbol): LetterLinkedList
   public add(value: TLetter): LetterLinkedList
   public add(value: string | symbol | TLetter): LetterLinkedList {
@@ -170,7 +191,7 @@ export class LetterLinkedList implements Iterable<TLetter> {
       return this; // never remove the last letter
     }
 
-    if(this._cursor.letter === letter) {
+    if (this._cursor.letter === letter) {
       this.setCursorById(letter.next!.id);
     }
 
@@ -246,11 +267,11 @@ export class LetterLinkedList implements Iterable<TLetter> {
   }
 
   protected revalue(srcValue: string | symbol): string | symbol {
-    if( 'string' !== typeof srcValue) {
+    if ('string' !== typeof srcValue) {
       return srcValue;
     }
 
-    if(srcValue === '\n') {
+    if (srcValue === '\n') {
       return NEW_LINE;
     }
 
