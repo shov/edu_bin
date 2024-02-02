@@ -1,4 +1,5 @@
 const path = require('path');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: "development",
@@ -17,9 +18,22 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
-        loader: "ts-loader"
-      }
+        test: /\.ts$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+      {
+        test: /\.scss$/,
+        use: ['style-loader', 'css-loader', 'sass-loader'],
+      },
     ]
-  }
+  },
+  plugins: [
+    new CopyWebpackPlugin({
+      patterns: [
+        { from: 'src/front/index.html', to: 'index.html' },
+        { from: 'src/front/style.scss', to: 'style.css' },
+      ],
+    }),
+  ],
 };

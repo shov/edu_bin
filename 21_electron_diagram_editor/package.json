@@ -5,15 +5,14 @@
   "main": "dist/main/main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-
-    "build:be": "webpack --config webpack-be.config.js",
-    "build:fe": "webpack --config webpack-fe.config.js",
+    "build:be": "npx webpack --config webpack-be.config.js",
+    "build:fe": "npx webpack --config webpack-fe.config.js",
     "build": "npm run build:be && npm run build:fe",
-
-    "watch:be": "webpack --config webpack-be.config.js --watch",
-    "watch:fe": "webpack --config webpack-fe.config.js --watch",
-    "watch": "npm run watch:be && npm run watch:fe",
-
+    "watch:be": "npx webpack --config webpack-be.config.js --watch",
+    "watch:fe": "npx webpack --config webpack-fe.config.js --watch",
+    "reload": "npx electron -r electron-reload .",
+    "watch": "npx concurrently \"npm run watch:be\" \"npm run watch:fe\" \"npm run reload\"",
+    "dev": "npx electron .",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make"
@@ -29,7 +28,13 @@
     "@electron-forge/maker-zip": "^7.2.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.2.0",
     "@types/three": "^0.161.2",
+    "concurrently": "^8.2.2",
+    "copy-webpack-plugin": "^12.0.2",
     "electron": "^28.2.1",
+    "electron-reload": "^2.0.0-alpha.1",
+    "node-sass": "^9.0.0",
+    "sass": "^1.70.0",
+    "sass-loader": "^14.1.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.3.3",
     "vite": "^5.0.12",

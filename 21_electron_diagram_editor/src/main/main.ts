@@ -11,7 +11,7 @@ const createMainWindow = () => {
     },
   });
 
-  mainWindow.loadFile(path.join(__dirname, '/../index.html'));
+  mainWindow.loadFile(path.join(__dirname, '/../front/index.html'));
 };
 
 app.on('ready', createMainWindow);
