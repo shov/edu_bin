@@ -1,28 +1,85 @@
 import * as THREE from 'three';
 import { Input } from '../Input';
 import { IPosition, IEntity, ISimpleSize } from '../Common';
+import { CameraController } from '../CameraController';
+import { ConnectionPoint } from './ConnectionPoint';
 
 export class Rectangle implements IPosition, IEntity, ISimpleSize {
- 
-  mouseClickedAt?: { x: number, y: number } = void 0;
 
-  pointList: THREE.Vector3[] = [];
-  geometry?: THREE.BufferGeometry;
-  material?: THREE.Material;
-  rectangleLine?: THREE.Line;
+  public static readonly DEFAULT_WIDTH = 1.5;
+  public static readonly DEFAULT_HEIGHT = 0.8;
 
- 
-  constructor(
-    public scene: THREE.Scene, 
-    public x: number = 1, 
-    public y: number = 1, 
-    public width: number = 1,
-    public height: number = 1,
-    ) {
+  public static createDefault(scene: THREE.Scene, x: number, y: number): Rectangle {
+    return new Rectangle(scene, x - Rectangle.DEFAULT_WIDTH / 2, y - Rectangle.DEFAULT_HEIGHT / 2, Rectangle.DEFAULT_WIDTH, Rectangle.DEFAULT_HEIGHT);
   }
 
-  update(input: Input, camera: THREE.Camera): void {
-    this.pointList = [
+  mouseClickedAt?: { x: number, y: number } = void 0;
+
+  drawFocusHighlight: boolean = false;
+
+  connectionPointList: ConnectionPoint[] = [];
+
+  constructor(
+    public scene: THREE.Scene,
+    public x: number = 1,
+    public y: number = 1,
+    public width: number = 1,
+    public height: number = 1,
+  ) {
+    this.connectionPointList.push(new ConnectionPoint(this, scene, width / 2, 0));
+    this.connectionPointList.push(new ConnectionPoint(this, scene, width / 2, height));
+    this.connectionPointList.push(new ConnectionPoint(this, scene, 0, height / 2));
+    this.connectionPointList.push(new ConnectionPoint(this, scene, width, height / 2));
+
+  }
+
+  update(input: Input, camera: THREE.Camera, render: THREE.Renderer, entityList: IEntity[]): void {
+    // hover focus
+    const mouseHover = input.mouseState.x > this.x && input.mouseState.x < this.x + this.width && input.mouseState.y > this.y && input.mouseState.y < this.y + this.height;
+    if (mouseHover && !input.mouseState.focusGroupCheck(Rectangle) && !input.mouseState.focusGroupCheck(CameraController)) {
+      input.mouseState.focusSet(this);
+    }
+    if (!mouseHover && !input.mouseState.leftButton && input.mouseState.focusCheck(this)) {
+      input.mouseState.focusClear(Rectangle);
+    }
+
+    this.drawFocusHighlight = false;
+    if (input.mouseState.focusCheck(this)) {
+      this.drawFocusHighlight = true;
+    }
+
+    // drag
+    const onDrag = input.mouseState.leftButton && input.mouseState.focusCheck(this) && !input.mouseState.focusGroupCheck(ConnectionPoint);
+    if (onDrag && !this.mouseClickedAt) {
+      this.mouseClickedAt = { x: input.mouseState.x, y: input.mouseState.y };
+    }
+    if (!onDrag) {
+      this.mouseClickedAt = void 0;
+    }
+    if (onDrag && this.mouseClickedAt) {
+      const deltaX = input.mouseState.x - this.mouseClickedAt.x;
+      const deltaY = input.mouseState.y - this.mouseClickedAt.y;
+
+      this.x += deltaX;
+      this.y += deltaY;
+
+      this.mouseClickedAt = { x: input.mouseState.x, y: input.mouseState.y };
+    }
+
+    // connection points
+    this.connectionPointList.forEach((connectionPoint) => {
+      connectionPoint.update(input, camera, render, entityList);
+    });
+  }
+  render(input: Input, camera: THREE.Camera, render: THREE.Renderer): void {
+
+    const fillRectGeometry = new THREE.PlaneGeometry(this.width, this.height);
+    const fillRectMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+    const rectangle = new THREE.Mesh(fillRectGeometry, fillRectMaterial);
+    rectangle.position.x = this.x + this.width / 2;
+    rectangle.position.y = this.y + this.height / 2;
+
+    const pointList = [
       new THREE.Vector3(this.x, this.y, 0),
       new THREE.Vector3(this.x + this.width, this.y, 0),
       new THREE.Vector3(this.x + this.width, this.y + this.height, 0),
@@ -30,48 +87,20 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
       new THREE.Vector3(this.x, this.y, 0),
     ]
 
-    this.geometry = new THREE.BufferGeometry().setFromPoints(this.pointList);
-    this.material = new THREE.LineBasicMaterial({ color: 0x000000 });
-    this.rectangleLine = new THREE.Line(this.geometry, this.material);
+    const geometry = new THREE.BufferGeometry().setFromPoints(pointList);
+    let material = new THREE.LineBasicMaterial({ color: 0x000000, });
+    let rectangleLine = new THREE.Line(geometry, material);
 
-    const mouseXToSceneX = (input.mouseState.x - window.innerWidth / 2) * 0.01 + camera.position.x;
-    const mouseYToSceneY = (window.innerHeight / 2 - input.mouseState.y) * 0.01 + camera.position.y;
-    
-    // hover
-    const mouseHover = mouseXToSceneX > this.x && mouseXToSceneX < this.x + this.width && mouseYToSceneY > this.y && mouseYToSceneY < this.y + this.height;
-    if(mouseHover) {
-      this.material = new THREE.LineBasicMaterial({ color: 0x0000BB });
-      this.rectangleLine = new THREE.Line(this.geometry, this.material);
+    if(this.drawFocusHighlight) {
+      material = new THREE.LineBasicMaterial({ color: 0x0000BB });
+      rectangleLine = new THREE.Line(geometry, material);
     }
 
-    // in focus
-    if(input.mouseState.leftButton && !input.mouseState.focus.has(this)) {
-      this.mouseClickedAt = { x: input.mouseState.x, y: input.mouseState.y };
-      // if mouse clicked in the rectangle, then add it to focus
-      
-      if(mouseHover) {
-        input.mouseState.focus.add(this);
-      } else {
-        this.mouseClickedAt = void 0;
-      }
-    }
-    if(!input.mouseState.leftButton && input.mouseState.focus.has(this)) {
-      input.mouseState.focus.delete(this);
-      this.mouseClickedAt = void 0;
-    }
+    this.scene.add(rectangle);
+    this.scene.add(rectangleLine!);
 
-    // move
-    if(this.mouseClickedAt && input.mouseState.focus.has(this)) {
-      const deltaX = input.mouseState.x - this.mouseClickedAt.x;
-      const deltaY = input.mouseState.y - this.mouseClickedAt.y;
-
-      this.x += deltaX * 0.01;
-      this.y -= deltaY * 0.01;
-
-      this.mouseClickedAt = { x: input.mouseState.x, y: input.mouseState.y };
-    }
-  }
-  render(): void {
-    this.scene.add(this.rectangleLine!);
+    this.connectionPointList.forEach((connectionPoint) => {
+      connectionPoint.render(input, camera, render);
+    });
   }
 }

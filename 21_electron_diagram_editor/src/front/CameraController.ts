@@ -1,6 +1,7 @@
 import { Renderer } from "three";
 import { IEntity } from "./Common";
 import { Input } from "./Input";
+import { Rectangle } from "./entities/Rectangle";
 
 
 export class CameraController implements IEntity {
@@ -13,14 +14,20 @@ export class CameraController implements IEntity {
       this.mouseClickedAt = void 0;
     }
 
-    if(this.mouseClickedAt && input.mouseState.focus.size === 0) {
+    if(this.mouseClickedAt && !input.mouseState.focusGroupCheck(Rectangle)) {
+      input.mouseState.focusSet(this);
+
       const deltaX = input.mouseState.x - this.mouseClickedAt.x;
       const deltaY = input.mouseState.y - this.mouseClickedAt.y;
 
-      camera.position.x -= deltaX * 0.01;
-      camera.position.y += deltaY * 0.01;
+      camera.position.x -= deltaX;
+      camera.position.y -= deltaY;
 
       this.mouseClickedAt = { x: input.mouseState.x, y: input.mouseState.y };
+    }
+
+    if(!input.mouseState.leftButton && input.mouseState.focusGroupCheck(CameraController)) {
+      input.mouseState.focusClear(CameraController);
     }
   }
   render(): void {
