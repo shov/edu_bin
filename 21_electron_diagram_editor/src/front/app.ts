@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const input = new Input(entitiList, scene, camera);
 	input.init();
 
-	entitiList.push(Rectangle.createDefault(scene, 0, 0));
+	entitiList.push(Rectangle.createDefault(scene, input, entitiList, 0, 0));
 	entitiList.push(new CameraController());
 
 	function clearScene() {

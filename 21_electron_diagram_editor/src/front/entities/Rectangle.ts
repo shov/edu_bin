@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Input } from '../Input';
+import { ESupportedEventType, Input } from '../Input';
 import { IPosition, IEntity, ISimpleSize } from '../Common';
 import { CameraController } from '../CameraController';
 import { ConnectionPoint } from './ConnectionPoint';
@@ -9,8 +9,8 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
   public static readonly DEFAULT_WIDTH = 1.5;
   public static readonly DEFAULT_HEIGHT = 0.8;
 
-  public static createDefault(scene: THREE.Scene, x: number, y: number): Rectangle {
-    return new Rectangle(scene, x - Rectangle.DEFAULT_WIDTH / 2, y - Rectangle.DEFAULT_HEIGHT / 2, Rectangle.DEFAULT_WIDTH, Rectangle.DEFAULT_HEIGHT);
+  public static createDefault(scene: THREE.Scene, input: Input, entityList: IEntity[], x: number, y: number): Rectangle {
+    return new Rectangle(scene, input, entityList, x - Rectangle.DEFAULT_WIDTH / 2, y - Rectangle.DEFAULT_HEIGHT / 2, Rectangle.DEFAULT_WIDTH, Rectangle.DEFAULT_HEIGHT);
   }
 
   mouseClickedAt?: { x: number, y: number } = void 0;
@@ -21,6 +21,8 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
 
   constructor(
     public scene: THREE.Scene,
+    public input: Input,
+    public entityList: IEntity[],
     public x: number = 1,
     public y: number = 1,
     public width: number = 1,
@@ -31,6 +33,7 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
     this.connectionPointList.push(new ConnectionPoint(this, scene, 0, height / 2));
     this.connectionPointList.push(new ConnectionPoint(this, scene, width, height / 2));
 
+    this.input.eventPool.addEventListener(ESupportedEventType.DBLCLICK, this.onDoubleClick.bind(this));
   }
 
   update(input: Input, camera: THREE.Camera, render: THREE.Renderer, entityList: IEntity[]): void {
@@ -91,7 +94,7 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
     let material = new THREE.LineBasicMaterial({ color: 0x000000, });
     let rectangleLine = new THREE.Line(geometry, material);
 
-    if(this.drawFocusHighlight) {
+    if (this.drawFocusHighlight) {
       material = new THREE.LineBasicMaterial({ color: 0x0000BB });
       rectangleLine = new THREE.Line(geometry, material);
     }
@@ -102,5 +105,12 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
     this.connectionPointList.forEach((connectionPoint) => {
       connectionPoint.render(input, camera, render);
     });
+  }
+
+  onDoubleClick(event: Event) {
+    // if left button is double clicked
+    if ((event as MouseEvent).button === 0 && !this.input.mouseState.focusGroupCheck(Rectangle)) {
+      this.entityList.push(Rectangle.createDefault(this.scene, this.input, this.entityList, this.input.mouseState.x, this.input.mouseState.y));
+    }
   }
 }

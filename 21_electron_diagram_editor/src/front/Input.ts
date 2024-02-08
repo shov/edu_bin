@@ -15,7 +15,18 @@ export type TMouseState = {
   focusClear: (t: Function) => void,
 }
 
-//export type TEventListenerMap = Map<eventName>
+export enum ESupportedEventType {
+  MOUSEMOVE = 'mousemove',
+  MOUSEDOWN = 'mousedown',
+  MOUSEUP = 'mouseup',
+  DBLCLICK = 'dblclick',
+}
+export type TEventPoolAccessObject = {
+  eventMap: Map<ESupportedEventType, ((event: Event) => void)[]>,
+  addEventListener: (type: ESupportedEventType, listener: (event: Event) => void) => void,
+  removeEventListener: (type: ESupportedEventType, listener: (event: Event) => void) => void,
+  dispatchEvent: (type: Event) => void,
+}
 
 export class Input {
   mouseState: TMouseState =
@@ -38,6 +49,34 @@ export class Input {
         this.focus.delete(t);
       },
     };
+
+  eventPool: TEventPoolAccessObject = {
+    eventMap: new Map(),
+
+    addEventListener(type: ESupportedEventType, listener: (event: Event) => void) {
+      if (!this.eventMap.has(type)) {
+        this.eventMap.set(type, []);
+      }
+      this.eventMap.get(type)!.push(listener);
+    },
+
+    removeEventListener(type: ESupportedEventType, listener: (event: Event) => void) {
+      if (!this.eventMap.has(type)) {
+        return;
+      }
+      const index = this.eventMap.get(type)!.indexOf(listener);
+      if (index !== -1) {
+        this.eventMap.get(type)!.splice(index, 1);
+      }
+    },
+
+    dispatchEvent(event: Event) {
+      if (!this.eventMap.has(event.type as ESupportedEventType)) {
+        return;
+      }
+      this.eventMap.get(event.type as ESupportedEventType)!.forEach((listener) => listener(event));
+    },
+  };
 
 
   constructor(
@@ -71,26 +110,29 @@ export class Input {
       // The intersection point contains the mouse coordinates on the z-flat
       this.mouseState.x = intersection.x;
       this.mouseState.y = intersection.y;
+
+      this.eventPool.dispatchEvent(event);
     });
 
     // Track mouse down
     document.addEventListener('mousedown', (event) => {
       this.mouseState.leftButton = event.button === 0;
       this.mouseState.rightButton = event.button === 2;
+
+      this.eventPool.dispatchEvent(event);
     });
 
     // Track mouse up
     document.addEventListener('mouseup', (event) => {
       this.mouseState.leftButton = event.button !== 0;
       this.mouseState.rightButton = event.button !== 2;
+
+      this.eventPool.dispatchEvent(event);
     });
 
     // double left click
     document.addEventListener('dblclick', (event) => {
-      // if left button is double clicked
-      if (event.button === 0 && !this.mouseState.focusGroupCheck(Rectangle)){
-        this.entityList.push(Rectangle.createDefault(this.scene, this.mouseState.x, this.mouseState.y));
-      }
+      this.eventPool.dispatchEvent(event);
     });
   }
 }
