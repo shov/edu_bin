@@ -1,5 +1,5 @@
 import { CameraController } from "./CameraController";
-import { IEntity } from "./Common";
+import { IEntity, IRenderUnlockedStack } from "./Common";
 import { Rectangle } from "./entities/Rectangle";
 import * as THREE from 'three';
 
@@ -50,43 +50,47 @@ export class Input {
       },
     };
 
-  eventPool: TEventPoolAccessObject = {
-    eventMap: new Map(),
-
-    addEventListener(type: ESupportedEventType, listener: (event: Event) => void) {
-      if (!this.eventMap.has(type)) {
-        this.eventMap.set(type, []);
-      }
-      this.eventMap.get(type)!.push(listener);
-    },
-
-    removeEventListener(type: ESupportedEventType, listener: (event: Event) => void) {
-      if (!this.eventMap.has(type)) {
-        return;
-      }
-      const index = this.eventMap.get(type)!.indexOf(listener);
-      if (index !== -1) {
-        this.eventMap.get(type)!.splice(index, 1);
-      }
-    },
-
-    dispatchEvent(event: Event) {
-      if (!this.eventMap.has(event.type as ESupportedEventType)) {
-        return;
-      }
-      this.eventMap.get(event.type as ESupportedEventType)!.forEach((listener) => listener(event));
-    },
-  };
+  eventPool!: TEventPoolAccessObject;
+  renderUnlockedStack!: IRenderUnlockedStack;
 
 
   constructor(
     private entityList: IEntity[],
     private scene: THREE.Scene,
     private camera: THREE.Camera,
-  ) { }
+  ) { 
+    this.eventPool = {
+      eventMap: new Map(),
+  
+      addEventListener(type: ESupportedEventType, listener: (event: Event) => void) {
+        if (!this.eventMap.has(type)) {
+          this.eventMap.set(type, []);
+        }
+        this.eventMap.get(type)!.push(listener);
+      },
+  
+      removeEventListener(type: ESupportedEventType, listener: (event: Event) => void) {
+        if (!this.eventMap.has(type)) {
+          return;
+        }
+        const index = this.eventMap.get(type)!.indexOf(listener);
+        if (index !== -1) {
+          this.eventMap.get(type)!.splice(index, 1);
+        }
+      },
+  
+      dispatchEvent(event: Event) {
+        if (!this.eventMap.has(event.type as ESupportedEventType)) {
+          return;
+        }
+        this.eventMap.get(event.type as ESupportedEventType)!.forEach((listener) => listener(event));
+      },
+    };
+  }
 
-  init(): void {
-
+  init(renderUnlockedStack: IRenderUnlockedStack): void {
+    this.renderUnlockedStack = renderUnlockedStack;
+    
     document.addEventListener('mousemove', (event) => {
       const raycaster = new THREE.Raycaster();
       const mouse = new THREE.Vector2();

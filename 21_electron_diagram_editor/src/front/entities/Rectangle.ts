@@ -3,11 +3,12 @@ import { ESupportedEventType, Input } from '../Input';
 import { IPosition, IEntity, ISimpleSize } from '../Common';
 import { CameraController } from '../CameraController';
 import { ConnectionPoint } from './ConnectionPoint';
+import { Curve } from './Curve';
 
 export class Rectangle implements IPosition, IEntity, ISimpleSize {
 
-  public static readonly DEFAULT_WIDTH = 1.5;
-  public static readonly DEFAULT_HEIGHT = 0.8;
+  public static readonly DEFAULT_WIDTH = 2.5;
+  public static readonly DEFAULT_HEIGHT = 1.8;
 
   public static createDefault(scene: THREE.Scene, input: Input, entityList: IEntity[], x: number, y: number): Rectangle {
     return new Rectangle(scene, input, entityList, x - Rectangle.DEFAULT_WIDTH / 2, y - Rectangle.DEFAULT_HEIGHT / 2, Rectangle.DEFAULT_WIDTH, Rectangle.DEFAULT_HEIGHT);
@@ -41,9 +42,11 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
     const mouseHover = input.mouseState.x > this.x && input.mouseState.x < this.x + this.width && input.mouseState.y > this.y && input.mouseState.y < this.y + this.height;
     if (mouseHover && !input.mouseState.focusGroupCheck(Rectangle) && !input.mouseState.focusGroupCheck(CameraController)) {
       input.mouseState.focusSet(this);
+      input.renderUnlockedStack.inc();
     }
     if (!mouseHover && !input.mouseState.leftButton && input.mouseState.focusCheck(this)) {
       input.mouseState.focusClear(Rectangle);
+      input.renderUnlockedStack.dec();
     }
 
     this.drawFocusHighlight = false;
@@ -52,7 +55,12 @@ export class Rectangle implements IPosition, IEntity, ISimpleSize {
     }
 
     // drag
-    const onDrag = input.mouseState.leftButton && input.mouseState.focusCheck(this) && !input.mouseState.focusGroupCheck(ConnectionPoint);
+    const onDrag = 
+      input.mouseState.leftButton 
+      && input.mouseState.focusCheck(this) 
+      && !input.mouseState.focusGroupCheck(ConnectionPoint)
+      && !input.mouseState.focusGroupCheck(Curve);
+      
     if (onDrag && !this.mouseClickedAt) {
       this.mouseClickedAt = { x: input.mouseState.x, y: input.mouseState.y };
     }

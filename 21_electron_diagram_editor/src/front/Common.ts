@@ -14,3 +14,9 @@ export interface ISimpleSize {
   width: number;
   height: number;
 }
+
+export interface IRenderUnlockedStack {
+  inc(): void;
+  dec(): void;
+  start(): void;
+}

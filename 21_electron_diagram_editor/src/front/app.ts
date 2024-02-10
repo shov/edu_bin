@@ -3,6 +3,8 @@ import { IEntity } from './Common';
 import { Rectangle } from './entities/Rectangle';
 import { Input } from './Input';
 import { CameraController } from './CameraController';
+import { RenderUnlockedStack } from './RenderUnlockedStack';
+import { Curve } from './entities/Curve';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const scene = new THREE.Scene();
@@ -18,30 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const entitiList: IEntity[] = [];
 	const input = new Input(entitiList, scene, camera);
-	input.init();
+	
+
+	const renderUnlockedStack = new RenderUnlockedStack(
+		scene, renderer, camera, entitiList, input
+	)
+	input.init(renderUnlockedStack);
+
 
 	entitiList.push(Rectangle.createDefault(scene, input, entitiList, 0, 0));
 	entitiList.push(new CameraController());
 
-	function clearScene() {
-		while (scene.children.length > 0) {
-			scene.remove(scene.children[0]);
-		}
-	}
-
-	function animate() {
-		requestAnimationFrame(animate);
-
-		clearScene();
-		entitiList.forEach((entity) => {
-			entity.update(input, camera, renderer, entitiList);
-			entity.render(input, camera, renderer);
-		});
-
-		renderer.render(scene, camera);
-	}
-
-	animate();
+	renderUnlockedStack.start();
 
 	// on window resize, adjust the camera aspect ratio and renderer size
 	window.addEventListener('resize', () => {
