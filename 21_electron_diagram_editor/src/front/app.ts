@@ -5,6 +5,7 @@ import { Input } from './Input';
 import { CameraController } from './CameraController';
 import { RenderUnlockedStack } from './RenderUnlockedStack';
 import { Curve } from './entities/Curve';
+import { Grid } from './entities/Grid';
 
 document.addEventListener('DOMContentLoaded', () => {
 	const scene = new THREE.Scene();
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	input.init(renderUnlockedStack);
 
 
+	entitiList.push(new Grid(scene));
 	entitiList.push(Rectangle.createDefault(scene, input, entitiList, 0, 0));
 	entitiList.push(new CameraController());
 

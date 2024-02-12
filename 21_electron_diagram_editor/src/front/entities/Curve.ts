@@ -35,9 +35,9 @@ export class Curve implements IEntity {
     const curve = new THREE.SplineCurve([
       new THREE.Vector2(this.start.x, this.start.y),
       // point in geometry middle
-      new THREE.Vector2(this.start.x + (this.end.x - this.start.x) / 2, this.start.y + (this.end.y - this.start.y) / 2),
-      // new THREE.Vector2( this.start.x + (isRightSide ? 2*C : - 2*C ), this.start.y + (isUpSide ? C : - C) ), 
-      // new THREE.Vector2( this.end.x + (isRightSide ? -2*C : 2*C), this.end.y + (isUpSide ? -C : C)),
+      //new THREE.Vector2(this.start.x + (this.end.x - this.start.x) / 2, this.start.y + (this.end.y - this.start.y) / 2),
+       new THREE.Vector2( this.start.x + (isRightSide ? 2*C : - 2*C ), this.start.y + (isUpSide ? C : - C) ), 
+         new THREE.Vector2( this.end.x + (isRightSide ? -2*C : 2*C), this.end.y + (isUpSide ? -C : C)),
       new THREE.Vector2(this.end.x, this.end.y),
     ]);
 
