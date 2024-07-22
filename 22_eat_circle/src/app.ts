@@ -1,55 +1,54 @@
+const BE_FETCH_CIRCLE_NETWORK_DATA_URL: string = process.env.BE_FETCH_CIRCLE_NETWORK_DATA_URL!;
+const SOCKET_URL: string = process.env.SOCKET_URL!;
 
-/*
-I'm planning create a tiny JS web game based on canvas with no libraries. It's to be multiplayer, so the server app is required as well. Each player has a colorful circle of unique color. The circle always moves to mouse pointer direction with speed that depends on the size of the circle. The bigger the slower. If player's circle collides with another player's circle the bigger one eats/absorbs/consumes the smaller one: the smaller circle's player looses then, the winner's circle gets bigger.
-*/
+interface IScene {
+    update(dt: number): void;
+    render(dt: number): void;
+    registerEntity(entity: IGameEntity): void;
+    deleteEntity(entity: IGameEntity): void;
+    getFirstByTag(tag: string): IGameEntity | null;
+    getAllByTag(tag: string): IGameEntity[];
+}
 
-/*
-Creating a multiplayer JS web game with the features you've described is an interesting and engaging project. Here's a high-level breakdown of what you need to do to create the game:
-
-Frontend (Client-Side)
-HTML and Canvas Setup:
-
-Create an HTML file with a canvas element.
-Set up basic styling to center the canvas on the page and make it responsive.
-JavaScript for Game Logic:
-
-Initialize the canvas and get the 2D rendering context.
-Handle mouse movement to get the mouse position.
-Create a player class to represent each circle with properties like position, size, color, and speed.
-Implement the movement logic where the circle moves towards the mouse pointer, with the speed dependent on the circle's size.
-Implement collision detection logic to handle when circles collide and the smaller one is consumed.
-Rendering:
-
-Continuously clear the canvas and redraw all the circles at their new positions.
-Backend (Server-Side)
-Server Setup:
-
-Use Node.js and a WebSocket library (like ws) to handle real-time communication between clients and the server.
-Maintain a list of all connected players and their circle data (position, size, color).
-Game State Management:
-
-Broadcast the game state to all clients at regular intervals.
-Handle incoming messages from clients, such as position updates and collision detection.
-Handling New Connections and Disconnections:
-
-Assign unique colors to new players.
-Remove players from the game state when they disconnect.
-*/
-
-
-
-class Scene {
+class Scene implements IScene {
     protected game!: Game;
+    protected entityList: IGameEntity[] = [];
 
-    update(): void {
-
-
+    update(dt: number): void {
+        this.entityList.forEach(entity => {
+            entity.update(dt);
+        });
     }
 
-    render(): void {
-
-
+    render(dt: number): void {
+        this.entityList.forEach(entity => {
+            entity.render(dt);
+        });
     }
+
+    registerEntity(entity: IGameEntity): void {
+        this.entityList.push(entity);
+    }
+
+    deleteEntity(entity: IEntity): void {
+        const index = this.entityList.indexOf(entity);
+        if (index !== -1) {
+            this.entityList.splice(index, 1);
+        }
+    }
+
+    getFirstByTag(tag: string): IGameEntity | null {
+        return this
+            .entityList
+            .find(entity => (entity as ITaggedGameEntity).tag === tag) ?? null;
+    }
+
+    getAllByTag(tag: string): IGameEntity[] {
+        return this
+            .entityList
+            .filter(entity => (entity as ITaggedGameEntity).tag === tag);
+    }
+
 }
 
 class Game {
@@ -61,6 +60,10 @@ class Game {
 
     static get ctx(): CanvasRenderingContext2D {
         return this.instance._ctx;
+    }
+
+    static getScene(index: number): Scene | null {
+        return this.instance._sceneList?.[index] ?? null;
     }
 
 
@@ -102,11 +105,11 @@ class Game {
     public tick(dt: number): void {
         // update all scenes
         this._sceneList.forEach(scene => {
-            scene.update();
+            scene.update(dt);
         });
         // render all scenes
         this._sceneList.forEach(scene => {
-            scene.render();
+            scene.render(dt);
         });
 
     }
@@ -130,13 +133,59 @@ function loop() {
 window.addEventListener('load', () => {
     const game = new Game();
 
+    const scene = new Scene();
+    game.addScene(scene);
+
+    const gameManager = new GameManager();
+    gameManager.setTag('GameManager');
+    scene.registerEntity(gameManager);
+
+    const world = new World();
+    world.setTag('World');
+    world.registerSystem(MovementSystem);
+    world.registerSystem(CollisionSystem);
+    world.registerSystem(MorphSystem);
+    world.registerSystem(GameOverSystem);
+    world.registerComponentPool(TransformComponent);
+    world.registerComponentPool(RenderComponent);
+    world.registerComponentPool(DirectionComponent);
+    world.registerComponentPool(VelocityComponent);
+    world.registerComponentPool(ScoreComponent);
+    world.registerComponentPool(CircleLookComponent);
+    world.registerComponentPool(GameStateComponent);
+
+    scene.registerEntity(world);
+
+    // Request backend data for all the circles
+    // Add them to the scene initially
+    fetchCircleData().then((circleData: TCircleNetworkState) => {
+        const circle = new Circle();
+        world.registerEntity(circle); // here init()
+        circle.setCircleNetworkState(circleData); // here it's rewritten
+    });
+
+    // Add user's circle to the scene that it's places close to others but no too much
+    const userCircle = new Circle();
+    userCircle.setTag('Player');
+    world.registerEntity(userCircle); // here init()
+
+    const pos = world.getData(userCircle.id, TransformComponent);
+    if (pos) {
+        pos.position = getStartPosition(world);
+    }
+
     // @ts-ignore
     window['game'] = game;
 
-    game.init().then(() => {
-        game.resize(window.innerWidth, window.innerHeight);
-        loop();
+    establishSocketConnection(() => {
+        game.init().then(() => {
+            game.resize(window.innerWidth, window.innerHeight);
+            loop();
+        });
+
     });
+
+
 })
 
 window.addEventListener('resize', () => {
@@ -158,9 +207,15 @@ interface IGameEntity {
     render(dt: number): void;
 }
 
-interface IEntity extends IGameEntity {
+interface ITaggedGameEntity extends IGameEntity {
+    tag: undefined | string;
+    setTag: undefined | ((tag: string) => void);
+}
+
+interface IEntity extends ITaggedGameEntity {
     setWorld(world: IWorld): void;
     setId(id: number): void;
+    get id(): number;
     init(): void;
     delete(): void;
 }
@@ -255,25 +310,143 @@ class MovementSystem implements ISystem {
     protected _directionPool!: Map<number, DirectionComponent>;
     protected _velocityPool!: Map<number, VelocityComponent>;
 
+    protected _mousePositionSubscribtion: any = null;
+
     constructor(world: IWorld) {
         this._world = world;
         // set pools by reference
-        this._transformPool = world.componentPoolMap.get(TransformComponent) as Map<number, TransformComponent>;
-        this._directionPool = world.componentPoolMap.get(DirectionComponent) as Map<number, DirectionComponent>;
-        this._velocityPool = world.componentPoolMap.get(VelocityComponent) as Map<number, VelocityComponent>;
+        this._transformPool = world.componentPoolMap
+            .get(TransformComponent) as Map<number, TransformComponent>;
+        this._directionPool = world.componentPoolMap
+            .get(DirectionComponent) as Map<number, DirectionComponent>;
+        this._velocityPool = world.componentPoolMap
+            .get(VelocityComponent) as Map<number, VelocityComponent>;
     }
     update(dt: number): void {
+        const scene = Game.getScene(0)!;
+        const player = scene.getFirstByTag('Player') as IEntity;
+        if (!player) {
+            return;
+        }
+
+        if (null === this._mousePositionSubscribtion) {
+            // Listen mouse pos, update direction of the player like if pointer right-top of the center, the direction 1,1
+            this._mousePositionSubscribtion = window
+                .addEventListener('mousemove',
+                    (event: MouseEvent) => {
+                        const transform = this._world.getData(player.id, TransformComponent);
+                        if (transform) {
+                            const rect = Game.canvas.getBoundingClientRect();
+                            const x = event.clientX - rect.left;
+                            const y = event.clientY - rect.top;
+                            const direction = this._world.getData(player.id, DirectionComponent);
+                            if (direction) {
+                                direction.direction
+                                    = new Vec2(x - transform.position.x, y - transform.position.y);
+                                // send direction to the server by the socket
+                                if (GameManager.socket) {
+                                    GameManager.socket.send(JSON.stringify({
+                                        GameManager.PLAYER_DIRECTION_MESSAGE,
+                                        id: player.id,
+                                        direction: direction.direction,
+                                    }));
+                                }
+                            }
+                        });
+        }
+
         // Update the position of entities based on their direction and velocity
+        this._transformPool.forEach((transform, id) => {
+            const direction = this._directionPool.get(id);
+            const velocity = this._velocityPool.get(id);
+            if (direction && velocity) {
+                transform.position.x += direction.direction.x * velocity.velocity * dt;
+                transform.position.y += direction.direction.y * velocity.velocity * dt;
+            }
+        });
+        // all positions to be rewritten from socket (handled by the on message subscribtion)
     }
 }
 
 class CollisionSystem implements ISystem {
     protected _world: IWorld;
+
+    protected _transformPool!: Map<number, TransformComponent>;
+    protected _circleLookPool!: Map<number, CircleLookComponent>;
+    protected _scorePool!: Map<number, ScoreComponent>;
+    protected _velocityPool!: Map<number, VelocityComponent>;
+
     constructor(world: IWorld) {
         this._world = world;
+
+        this._transformPool = world.componentPoolMap
+            .get(TransformComponent) as Map<number, TransformComponent>;
+        this._circleLookPool = world.componentPoolMap
+            .get(CircleLookComponent) as Map<number, CircleLookComponent>;
+        this._scorePool = world.componentPoolMap
+            .get(ScoreComponent) as Map<number, ScoreComponent>;
+        this._velocityPool = world.componentPoolMap
+            .get(VelocityComponent) as Map<number, VelocityComponent>;
     }
+
     update(dt: number): void {
         // Detect and handle collisions between entities
+        const positions: Vec2[] = [];
+        const sizes: number[] = [];
+
+        this._transformPool.forEach((transform, id) => {
+            positions.push(transform.position);
+        });
+
+        this._circleLookPool.forEach((circleLook, id) => {
+            sizes.push(circleLook.radius);
+        });
+
+        for (let i = 0; i < positions.length; i++) {
+            for (let j = i + 1; j < positions.length; j++) {
+                const dx = positions[i].x - positions[j].x;
+                const dy = positions[i].y - positions[j].y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < sizes[i] + sizes[j]) {
+                    // handle collision
+                    const biggerCircleId = sizes[i] > sizes[j] ? i : j;
+                    const smallerCircleId = sizes[i] > sizes[j] ? j : i;
+
+                    const score = this._scorePool.get(biggerCircleId);
+                    if (score) {
+                        score.score += 1;
+                    }
+
+                    const circleLook = this._circleLookPool.get(biggerCircleId);
+                    if (circleLook) {
+                        circleLook.radius += sizes[smallerCircleId] / 2;
+                    }
+
+                    const velocity = this._velocityPool.get(biggerCircleId);
+                    if (velocity) {
+                        velocity.velocity -= sizes[smallerCircleId] * 0.05;
+                    }
+
+                    const smallerCircle = this._world.getEntity(smallerCircleId);
+                    const scene = Game.getScene(0)!;
+                    const player = scene.getFirstByTag('Player') as IEntity;
+                    if (smallerCircle && player && smallerCircle.id === player.id) {
+                        // game over
+                        const gameState = this._world.getData(player.id, GameStateComponent);
+                        if (gameState) {
+                            gameState.state = EGameState.GAME_OVER;
+                        }
+                    } else {
+                        if (smallerCircle) {
+                            smallerCircle.delete();
+                            scene.deleteEntity(smallerCircle);
+                        }
+                    }
+
+                }
+            }
+        }
     }
 }
 
@@ -300,25 +473,34 @@ class GameOverSystem implements ISystem {
 
 // World
 
-interface IWorld extends IGameEntity {
+interface IWorld extends ITaggedGameEntity {
     registerSystem(type: SystemType): void;
     registerComponentPool(type: ComponentType<IComponent>): void;
     registerEntity(entity: IEntity): void;
     deleteEntity(id: number): void;
+    getEntity(id: number): IEntity | null;
 
     setData<T extends IComponent>(id: number, type: ComponentType<T>, component: T): void;
     getData<T extends IComponent>(id: number, type: ComponentType<T>): T | null;
 
-    entityList: (IEntity | null)[];
+    entityMap: Map<number
     systemList: ISystem[];
     componentPoolMap: Map<ComponentType<IComponent>, Map<number, IComponent>>;
 }
 
 class World implements IWorld {
-    public entityList: (IEntity | null)[] = [];
+    private _tag: string | undefined = void 0;
+    public get tag(): undefined | string {
+        return this._tag;
+    }
+
+    public setTag(tag: string): void {
+        this._tag = tag;
+    }
+
+    public entityMap: Map<number, IEntity> = new Map();
     public systemList: ISystem[] = [];
     public componentPoolMap: Map<ComponentType<IComponent>, Map<number, IComponent>> = new Map();
-    private freeIdList: number[] = [];
 
     registerSystem(type: SystemType): void {
         this.systemList.push(new type(this));
@@ -328,27 +510,23 @@ class World implements IWorld {
         this.componentPoolMap.set(type, new Map());
     }
 
-    registerEntity(entity: IEntity): void {
-        if (this.freeIdList.length > 0) {
-            const id = this.freeIdList.pop() as number;
-            entity.setId(id);
-            this.entityList[id] = entity;
-        } else {
-            const id = this.entityList.length;
-            entity.setId(id);
-            this.entityList.push(entity);
-        }
+    registerEntity(entity: IEntity, id: number): void {
+        this.entityMap.set(id, entity);
         entity.setWorld(this);
         entity.init();
     }
 
     deleteEntity(id: number): void {
-        this.entityList[id] = null;
+        this.entityMap[id] = null;
         this.freeIdList.push(id);
         // free all components of this entity
         this.componentPoolMap.forEach(pool => {
             pool.delete(id);
         });
+    }
+
+    getEntity(id: number): IEntity | null {
+        return this.entityMap?.[id] || null;
     }
 
     setData<T extends IComponent>(id: number, type: ComponentType<T>, component: T): void {
@@ -379,7 +557,16 @@ class World implements IWorld {
 
 // Entity
 
-class GameManager implements IGameEntity {
+class GameManager implements ITaggedGameEntity {
+    private _tag: string | undefined = void 0;
+    public get tag(): undefined | string {
+        return this._tag;
+    }
+
+    public setTag(tag: string): void {
+        this._tag = tag;
+    }
+
     protected static _takenColors: Set<string> = new Set();
 
     public static getUniqueColor(): string {
@@ -395,6 +582,18 @@ class GameManager implements IGameEntity {
         }
     }
 
+    public static FIELD_WIDTH = 5_000;
+    public static FIELD_HEIGHT = 5_000;
+
+    public static INITIAL_RADIUS = 10;
+
+    public static PLAYER_REGISTER_MESSAGE = 'player_register_message';
+    public static PLAYER_DIRECTION_MESSAGE = 'player_direction_message';
+    public static SERVER_CIRCLE_STATE_MESSAGE = 'server_circle_state_message';
+
+    public static socket: WebSocket | null = null;
+
+
     update(dt: number): void {
 
     }
@@ -407,6 +606,19 @@ class GameManager implements IGameEntity {
 class Circle implements IEntity {
     protected _world!: IWorld;
     protected _id!: number;
+
+    public get id(): number {
+        return this._id;
+    }
+
+    protected _tag: undefined | string = void 0;
+    public get tag(): undefined | string {
+        return this._tag;
+    }
+
+    public setTag(tag: string): void {
+        this._tag = tag;
+    }
 
     setWorld(world: IWorld): void {
         this._world = world;
@@ -424,8 +636,43 @@ class Circle implements IEntity {
         this._world.setData(this._id, DirectionComponent, new DirectionComponent(new Vec2(1, 1)));
         this._world.setData(this._id, VelocityComponent, new VelocityComponent(1));
         this._world.setData(this._id, ScoreComponent, new ScoreComponent(0));
-        this._world.setData(this._id, CircleLookComponent, new CircleLookComponent(10, newColor));
+        this._world.setData(this._id, CircleLookComponent, new CircleLookComponent(GameManager.INITIAL_RADIUS, newColor));
         this._world.setData(this._id, GameStateComponent, new GameStateComponent(EGameState.PLAYING));
+    }
+
+    setCircleNetworkState(networkState: TCircleNetworkState): void {
+        // Update the entity's state based on network data
+        const transform = this._world
+            .getData(this._id, TransformComponent);
+        if (transform) {
+            transform.position = networkState.position;
+        }
+        const direction = this._world
+            .getData(this._id, DirectionComponent);
+        if (direction) {
+            direction.direction = networkState.direction;
+        }
+        const velocity = this._world
+            .getData(this._id, VelocityComponent);
+        if (velocity) {
+            velocity.velocity = networkState.velocity;
+        }
+        const score = this._world
+            .getData(this._id, ScoreComponent);
+        if (score) {
+            score.score = networkState.score;
+        }
+        const circleLook = this._world
+            .getData(this._id, CircleLookComponent);
+        if (circleLook) {
+            circleLook.radius = networkState.radius;
+            circleLook.color = networkState.color;
+        }
+        const gameState = this._world
+            .getData(this._id, GameStateComponent);
+        if (gameState) {
+            gameState.state = networkState.state;
+        }
     }
 
     delete(): void {
@@ -439,4 +686,170 @@ class Circle implements IEntity {
     render(dt: number): void {
         // Render the entity
     }
+}
+
+// Network FE
+
+type TCircleNetworkState = {
+    id: number;
+    position: Vec2;
+    color: string;
+    direction: Vec2;
+    velocity: number;
+    score: number;
+    radius: number;
+    state: EGameState;
+}
+
+async function fetchCircleData(): Promise<TCircleNetworkState> {
+    // Fetch circle data from the server
+    const r = await fetch(BE_FETCH_CIRCLE_NETWORK_DATA_URL);
+    return r.json();
+}
+
+type TIncomingSocketMessage = {
+    name: string;
+    payload: any;
+}
+
+async function establishSocketConnection(cb: (...args: any[]) => void): Promise<any> {
+    // Establish a WebSocket connection with the server
+    GameManager.socket = new WebSocket(SOCKET_URL);
+
+    GameManager.socket.onopen = () => {
+        console.log('Socket connection established');
+        cb();
+    };
+
+    GameManager.socket.onmessage = (event) => {
+        const data: TIncomingSocketMessage = JSON.parse(event.data);
+
+        if (data.name === GameManager.SERVER_CIRCLE_STATE_MESSAGE) {
+            // get world
+            const world = Game.getScene(0)!.getFirstByTag('World') as IWorld;
+
+            // Update the entity's state based on the received data
+            data.payload.forEach(
+                (circleData: TCircleNetworkState) => {
+                    const circle = world.entityMap[circleData.id];
+                    if (circle) {
+                        const entity = circle as Circle;
+                        entity.setCircleNetworkState(circleData);
+                    }
+                });
+        }
+    };
+
+    GameManager.socket.onclose = () => {
+        console.log('Socket connection closed');
+    };
+}
+
+// GAME BUSINESS LOGIC
+
+function getStartPosition(world: IWorld): Vec2 {
+    // Get all the positions of the existing circles
+    const positions: Vec2[] = [];
+    world.entityMap.forEach(entity => {
+        if (entity) {
+            const transform = world.getData(entity.id, TransformComponent);
+            if (transform) {
+                positions.push(transform.position);
+            }
+        }
+    });
+
+    const sizes: number[] = [];
+
+    world.entityMap.forEach(entity => {
+        if (entity) {
+            const circleLook = world.getData(entity.id, CircleLookComponent);
+            if (circleLook) {
+                sizes.push(circleLook.radius);
+            }
+        }
+    });
+
+    // Find a position that is not too close to any existing circle but not too far
+    // Take in consideration size of every circle
+
+    let x = 0;
+    let y = 0;
+    let isPositionOk = false;
+    while (!isPositionOk) {
+        x = Math.floor(Math.random() * GameManager.FIELD_WIDTH);
+        y = Math.floor(Math.random() * GameManager.FIELD_HEIGHT);
+
+        isPositionOk = true;
+        for (let i = 0; i < positions.length; i++) {
+            const distance = Math.sqrt(
+                (x - positions[i].x) ** 2 + (y - positions[i].y) ** 2
+            )
+                - sizes[i]
+                - GameManager.INITIAL_RADIUS;
+            if (distance < GameManager.INITIAL_RADIUS * 2) {
+                isPositionOk = false;
+                break;
+            }
+        }
+    }
+
+    return new Vec2(x, y);
+}
+
+/// SERVERSIDE
+namespace ServerSide {
+
+    const WebSocket = require('ws');
+
+    const server = new WebSocket.Server({ port: 8080 });
+
+    let players = {};
+
+    server.on('connection', (ws: WebSocket) => {
+        const id = Math.random().toString(36).substr(2, 9);
+        const color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+        players[id] = { id, x: Math.random() * 800, y: Math.random() * 600, radius: 20, color };
+
+        ws.id = id;
+        ws.send(JSON.stringify({ id }));
+
+        ws.on('message', (message) => {
+            const { id, x, y } = JSON.parse(message);
+            if (players[id]) {
+                players[id].x = x;
+                players[id].y = y;
+
+                for (const playerId in players) {
+                    if (playerId !== id) {
+                        const dx = players[playerId].x - x;
+                        const dy = players[playerId].y - y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        if (distance < players[playerId].radius + players[id].radius) {
+                            if (players[id].radius > players[playerId].radius) {
+                                players[id].radius += players[playerId].radius / 2;
+                                delete players[playerId];
+                            } else {
+                                players[playerId].radius += players[id].radius / 2;
+                                delete players[id];
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        ws.on('close', () => {
+            delete players[ws.id];
+        });
+    });
+
+    setInterval(() => {
+        const gameState = { players: Object.values(players) };
+        server.clients.forEach(client => {
+            if (client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify(gameState));
+            }
+        });
+    }, 1000 / 30); // 30 FPS
 }
