@@ -1,0 +1,22 @@
+{
+  "name": "terminal_filenav",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "ts-node src/index.ts",
+    "bundle": "esbuild src/index.ts --bundle --platform=node --outfile=dist/index.js"
+  },
+  "dependencies": {
+    "chalk": "^5.0.0",
+    "fs-extra": "^11.0.0",
+    "inquirer": "^9.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "esbuild": "^0.17.0"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
