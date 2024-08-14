@@ -1,22 +1,31 @@
-import * as fs from 'fs/promises';
 import { AFileSystemEntity } from './AFileSystemEntity';
-import { EFileType } from '../types/EFileType';
 import { IFile } from './IFile';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 export class File extends AFileSystemEntity implements IFile {
     constructor(name: string, path: string) {
         super(name, path, false);
     }
 
-    async read(): Promise<string> {
-        return await fs.readFile(this.path, 'utf-8');
+    async copyTo(destination: string): Promise<void> {
+        const destinationPath = path.join(destination, this.name);
+        await fs.copyFile(this.path, destinationPath);
     }
 
-    async write(data: string): Promise<void> {
-        await fs.writeFile(this.path, data, 'utf-8');
+    async moveTo(destination: string): Promise<void> {
+        const destinationPath = path.join(destination, this.name);
+        await fs.rename(this.path, destinationPath);
     }
 
-    async append(data: string): Promise<void> {
-        await fs.appendFile(this.path, data, 'utf-8');
+    async rename(newName: string): Promise<void> {
+        const newPath = path.join(path.dirname(this.path), newName);
+        await fs.rename(this.path, newPath);
+        this.name = newName;
+        this.path = newPath;
+    }
+
+    async delete(): Promise<void> {
+        await fs.unlink(this.path);
     }
 }

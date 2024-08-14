@@ -23,4 +23,7 @@ export abstract class AFileSystemEntity implements IFileSystemEntity {
             await fs.unlink(this.path);
         }
     }
+
+    abstract copyTo(destination: string): Promise<void>;
+    abstract moveTo(destination: string): Promise<void>;
 }

@@ -4,19 +4,20 @@ import { EventController } from './controllers/EventController';
 
 async function main() {
     // Init
-    const initialDirectory = new Directory('root', process.cwd());
+    const initialLeftDirectory = new Directory('left', process.cwd());
+    const initialRightDirectory = new Directory('right', process.cwd());
 
     // Create controllers
-    const eventController = new EventController(initialDirectory);
+    const eventController = new EventController(initialLeftDirectory, initialRightDirectory);
     const inputController = new InputController(eventController.getEventEmitter());
 
     // Load initial directory contents
     await eventController.loadDirectoryContents();
 
-    // Start listening for input
+    // Handle events
 }
 
-// Run the application
+// Run the main function
 main().catch((error) => {
     console.error('An error occurred:', error);
     process.exit(1);

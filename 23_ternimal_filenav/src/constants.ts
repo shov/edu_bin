@@ -1,0 +1,1 @@
+export const PARENT_DIRECTORY_NAME = '..';
